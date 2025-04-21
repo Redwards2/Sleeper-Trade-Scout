@@ -156,8 +156,8 @@ if username:
             cols = st.columns(2)
             for idx, (_, row) in enumerate(user_players.iterrows()):
                 label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
-                if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
-                selected_names.append(row['Player_Sleeper'])
+                    if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
+        selected_names.append(row['Player_Sleeper'])
 
             if selected_names:
                 # name_map mapping already provides correct names, selected_names is already correct list
