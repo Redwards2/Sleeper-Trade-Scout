@@ -154,15 +154,17 @@ if username:
             selected_names = []
             st.markdown("<h3>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
             position_order = ["QB", "RB", "WR", "TE"]
-            for position in position_order:
-                position_group = user_players[user_players["Position"] == position].sort_values("KTC_Value", ascending=False)
-                if not position_group.empty:
-                    st.markdown(f"**{position}**")
-                    cols = st.columns(2)
-                    for idx, (_, row) in enumerate(position_group.iterrows()):
-                        label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
-                        if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
-                            selected_names.append(row['Player_Sleeper'])
+position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
+cols = st.columns(2)
+for position in position_order:
+    position_group = user_players[user_players["Position"] == position].sort_values("KTC_Value", ascending=False)
+    if not position_group.empty:
+        with cols[position_col_map[position]]:
+            st.markdown(f"**{position}**")
+            for _, row in position_group.iterrows():
+                label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
+                if st.checkbox(label, key=row['Player_Sleeper']):
+                    selected_names.append(row['Player_Sleeper'])
 
             if selected_names:
                 # name_map mapping already provides correct names, selected_names is already correct list
