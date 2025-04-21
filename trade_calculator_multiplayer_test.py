@@ -174,9 +174,9 @@ if username:
                 st.markdown(f"<li><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
 
                                 for name in selected_names:
-                    selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
-                    headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
-                    st.markdown(f"<div style='text-align:center; display:inline-block; margin:10px;'><img src='{headshot_url}' width='120'/><br><small>{name}</small></div>", unsafe_allow_html=True)
+    selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
+    headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
+    st.markdown(f"<div style='text-align:center; display:inline-block; margin:10px;'><img src='{headshot_url}' width='120'/><br><small>{name}</small></div>", unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
