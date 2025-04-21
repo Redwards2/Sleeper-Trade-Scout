@@ -155,8 +155,8 @@ if username:
             st.markdown("<h3>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
             cols = st.columns(2)
             for idx, (_, row) in enumerate(user_players.iterrows()):
-                label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
-                    if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
+    label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
+    if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
         selected_names.append(row['Player_Sleeper'])
 
             if selected_names:
