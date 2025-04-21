@@ -153,13 +153,14 @@ if username:
 
             selected_names = []
             st.markdown("<h3>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
-            for _, row in user_players.iterrows():
+            cols = st.columns(2)
+            for idx, (_, row) in enumerate(user_players.iterrows()):
                 label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
-                if st.checkbox(label, key=row['Player_Sleeper']):
-                    selected_names.append(row['Player_Sleeper'])
+                if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
+                selected_names.append(row['Player_Sleeper'])
 
             if selected_names:
-                selected_names = [name_map[p] for p in selected_players]
+                # name_map mapping already provides correct names, selected_names is already correct list
                 selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
                     df, selected_names, top_qbs, qb_premium_setting
                 )
