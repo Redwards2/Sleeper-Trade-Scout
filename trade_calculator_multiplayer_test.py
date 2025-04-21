@@ -146,7 +146,7 @@ if username:
             user_players = df[df["Team_Owner"].str.lower() == username_lower]
             user_players = user_players.sort_values("Player_Sleeper")
             player_list = [f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})" for _, row in user_players.iterrows()]
-            name_map = {f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})": row['Player_Sleeper'] for _, row in user_players.iterrows()]
+            name_map = {f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})": row['Player_Sleeper'] for _, row in user_players.iterrows()}
 
             st.markdown("<h1 style='text-align:center; color:#4da6ff;'>Trade Suggestions (Based off KTC Values)</h1>", unsafe_allow_html=True)
             st.caption("Adding draft picks soon, IDP values coming at a later date as well")
