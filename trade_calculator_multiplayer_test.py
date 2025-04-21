@@ -158,7 +158,7 @@ if username:
                 if st.checkbox(label, key=row['Player_Sleeper']):
                     selected_names.append(row['Player_Sleeper'])
 
-            if selected_players:
+            if selected_names:
                 selected_names = [name_map[p] for p in selected_players]
                 selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
                     df, selected_names, top_qbs, qb_premium_setting
