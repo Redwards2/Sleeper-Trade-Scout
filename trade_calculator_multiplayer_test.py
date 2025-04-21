@@ -153,11 +153,15 @@ if username:
 
             selected_names = []
             st.markdown("<h3>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
-            cols = st.columns(2)
-            for idx, (_, row) in enumerate(user_players.iterrows()):
-                
-                    label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
-                    if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
+            position_order = ["QB", "RB", "WR", "TE"]
+            for position in position_order:
+                position_group = user_players[user_players["Position"] == position]
+                if not position_group.empty:
+                    st.markdown(f"**{position}**")
+                    cols = st.columns(2)
+                    for idx, (_, row) in enumerate(position_group.iterrows()):
+                        label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
+                        if cols[idx % 2].checkbox(label, key=row['Player_Sleeper']):
                             selected_names.append(row['Player_Sleeper'])
 
             if selected_names:
