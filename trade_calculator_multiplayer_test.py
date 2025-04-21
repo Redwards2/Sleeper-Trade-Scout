@@ -149,7 +149,7 @@ if username:
             name_map = {f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})": row['Player_Sleeper'] for _, row in user_players.iterrows()}
 
             st.markdown("<h1 style='text-align:center; color:#4da6ff;'>Trade Suggestions (Based off KTC Values)</h1>", unsafe_allow_html=True)
-            st.caption("Adding draft picks soon, IDP values coming at a later date as well")
+            st.caption("<ul style='text-align:center; list-style-position: inside;'>Adding draft picks soon, IDP values coming at a later date as well")
 
             selected_names = []
             st.markdown("<h3 style='text-align:center; color:#4da6ff;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
