@@ -154,8 +154,8 @@ if username:
             selected_names = []
             st.markdown("<h3>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
             position_order = ["QB", "RB", "WR", "TE"]
-                position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
-                cols = st.columns(2)
+            position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
+            cols = st.columns(2)
 for position in position_order:
     position_group = user_players[user_players["Position"] == position].sort_values("KTC_Value", ascending=False)
     if not position_group.empty:
