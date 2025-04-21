@@ -146,12 +146,17 @@ if username:
             user_players = df[df["Team_Owner"].str.lower() == username_lower]
             user_players = user_players.sort_values("Player_Sleeper")
             player_list = [f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})" for _, row in user_players.iterrows()]
-            name_map = {f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})": row['Player_Sleeper'] for _, row in user_players.iterrows()}
+            name_map = {f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})": row['Player_Sleeper'] for _, row in user_players.iterrows()]
 
             st.markdown("<h1 style='text-align:center; color:#4da6ff;'>Trade Suggestions (Based off KTC Values)</h1>", unsafe_allow_html=True)
             st.caption("Adding draft picks soon, IDP values coming at a later date as well")
 
-            selected_players = st.multiselect("Select player(s) to trade away:", options=player_list)
+            selected_names = []
+            st.markdown("<h3>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
+            for _, row in user_players.iterrows():
+                label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
+                if st.checkbox(label, key=row['Player_Sleeper']):
+                    selected_names.append(row['Player_Sleeper'])
 
             if selected_players:
                 selected_names = [name_map[p] for p in selected_players]
