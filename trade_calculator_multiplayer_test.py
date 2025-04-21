@@ -152,7 +152,7 @@ if username:
             st.caption("Adding draft picks soon, IDP values coming at a later date as well")
 
             selected_names = []
-            st.markdown("<h3>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align:center; color:#4da6ff;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
             position_order = ["QB", "RB", "WR", "TE"]
             position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
             cols = st.columns(2)
@@ -174,10 +174,10 @@ if username:
                 owner = selected_rows.iloc[0]["Team_Owner"]
 
                 st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><li><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
-                st.markdown(f"<li><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
-                st.markdown(f"<li><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
-                st.markdown(f"<li><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
+                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
+                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
+                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
+                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
 
                 st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
                 for name in selected_names:
