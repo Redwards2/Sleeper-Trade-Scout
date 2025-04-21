@@ -156,18 +156,18 @@ if username:
             position_order = ["QB", "RB", "WR", "TE"]
             position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
             cols = st.columns(2)
-for position in position_order:
-    position_group = user_players[user_players["Position"] == position].sort_values("KTC_Value", ascending=False)
-    if not position_group.empty:
-        with cols[position_col_map[position]]:
-            st.markdown(f"**{position}**")
-            for _, row in position_group.iterrows():
-                label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
-                if st.checkbox(label, key=row['Player_Sleeper']):
-                    selected_names.append(row['Player_Sleeper'])
+
+            for position in position_order:
+                position_group = user_players[user_players["Position"] == position].sort_values("KTC_Value", ascending=False)
+                if not position_group.empty:
+                    with cols[position_col_map[position]]:
+                        st.markdown(f"**{position}**")
+                        for _, row in position_group.iterrows():
+                            label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
+                            if st.checkbox(label, key=row['Player_Sleeper']):
+                                selected_names.append(row['Player_Sleeper'])
 
             if selected_names:
-                # name_map mapping already provides correct names, selected_names is already correct list
                 selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
                     df, selected_names, top_qbs, qb_premium_setting
                 )
