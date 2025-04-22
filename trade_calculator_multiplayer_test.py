@@ -149,7 +149,7 @@ if username:
             name_map = {f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})": row['Player_Sleeper'] for _, row in user_players.iterrows()}
 
             st.markdown("<h1 style='text-align:center; color:#4da6ff;'>Trade Suggestions (Based off KTC Values)</h1>", unsafe_allow_html=True)
-            st.caption("<ul style='text-align:center; list-style-position: inside;'>Adding draft picks soon, IDP values coming at a later date as well")
+            st.caption("Adding draft picks soon, IDP values coming at a later date as well")
 
             selected_names = []
             st.markdown("<h3 style='text-align:center; color:#4da6ff;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
@@ -189,6 +189,52 @@ if username:
                         unsafe_allow_html=True
                     )
                 st.markdown("</div>", unsafe_allow_html=True)
+
+                # Trade Suggestions Section
+                st.markdown("<h3 style='text-align:center;'>1-for-1 Trade Suggestions</h3>", unsafe_allow_html=True)
+                one_low = int(adjusted_total * (1 - tolerance / 100))
+                one_high = int(adjusted_total * (1 + tolerance / 100))
+
+                one_for_one = df[
+                    (df["KTC_Value"] >= one_low) &
+                    (df["KTC_Value"] <= one_high) &
+                    (df["Team_Owner"] != owner)
+                ][["Player_Sleeper", "Position", "Team", "KTC_Value", "Team_Owner"]]
+
+                if not one_for_one.empty:
+                    st.dataframe(one_for_one.sort_values("KTC_Value", ascending=False).reset_index(drop=True))
+                else:
+                    st.write("No 1-for-1 trades found in that range.")
+
+                st.markdown("<h3 style='text-align:center;'>2-for-1 Trade Suggestions</h3>", unsafe_allow_html=True)
+                two_low = int(adjusted_total * (1 - tolerance / 100))
+                two_high = int(adjusted_total * (1 + tolerance / 100))
+
+                results = []
+                other_teams = df[df["Team_Owner"] != owner]["Team_Owner"].unique()
+
+                for team_owner in other_teams:
+                    team_players = df[df["Team_Owner"] == team_owner]
+                    combos = combinations(team_players.iterrows(), 2)
+                    for (i1, p1), (i2, p2) in combos:
+                        value = p1["KTC_Value"] + p2["KTC_Value"]
+                        if p1["Position"] == "QB" and p1["Player_Sleeper"] in top_qbs:
+                            value += qb_premium_setting
+                        if p2["Position"] == "QB" and p2["Player_Sleeper"] in top_qbs:
+                            value += qb_premium_setting
+                        value += package_bonus([p1["KTC_Value"], p2["KTC_Value"]])
+                        if two_low <= value <= two_high:
+                            results.append({
+                                "Team_Owner": team_owner,
+                                "Player 1": f"{p1['Player_Sleeper']} (KTC: {p1['KTC_Value']})",
+                                "Player 2": f"{p2['Player_Sleeper']} (KTC: {p2['KTC_Value']})",
+                                "Total Value": value
+                            })
+
+                if results:
+                    st.dataframe(pd.DataFrame(results).sort_values("Total Value", ascending=False).reset_index(drop=True))
+                else:
+                    st.write("No 2-for-1 trades found in that range.")
 
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
