@@ -143,16 +143,10 @@ if username:
         if not df.empty:
             top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
 
-            user_players = df[df["Team_Owner"].str.lower() == username_lower]
-            user_players = user_players.sort_values("Player_Sleeper")
-            player_list = [f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})" for _, row in user_players.iterrows()]
-            name_map = {f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})": row['Player_Sleeper'] for _, row in user_players.iterrows()}
-
-            st.markdown("<h1 style='text-align:center; color:#4da6ff;'>Trade Suggestions (Based off KTC Values)</h1>", unsafe_allow_html=True)
-            st.caption("Adding draft picks soon, IDP values coming at a later date as well")
-
+            user_players = df[df["Team_Owner"].str.lower() == username_lower].sort_values("Player_Sleeper")
             selected_names = []
-            st.markdown("<h3 style='text-align:center; color:#4da6ff;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
+
+            st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
             position_order = ["QB", "RB", "WR", "TE"]
             position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
             cols = st.columns(2)
@@ -174,10 +168,10 @@ if username:
                 owner = selected_rows.iloc[0]["Team_Owner"]
 
                 st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
+                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><li><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
+                st.markdown(f"<li><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
+                st.markdown(f"<li><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
+                st.markdown(f"<li><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
 
                 st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
                 for name in selected_names:
@@ -190,7 +184,6 @@ if username:
                     )
                 st.markdown("</div>", unsafe_allow_html=True)
 
-                # Trade Suggestions Section
                 st.markdown("<hr>", unsafe_allow_html=True)
                 try:
                     with st.expander("📈 1-for-1 Trade Suggestions"):
@@ -238,7 +231,7 @@ if username:
                         else:
                             st.write("No 2-for-1 trades found in that range.")
                 except Exception as trade_error:
-                    st.error(f"⚠️ Trade suggestion error: {trade_error}"))
+                    st.error(f"⚠️ Trade suggestion error: {trade_error}")
 
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
