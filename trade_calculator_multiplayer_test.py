@@ -238,10 +238,9 @@ if username:
                         else:
                             st.write("No 2-for-1 trades found in that range.")
                 except Exception as trade_error:
-                    st.error(f"⚠️ Trade suggestion error: {trade_error}")")
+                    st.error(f"⚠️ Trade suggestion error: {trade_error}"))
 
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
 else:
     st.info("Enter your Sleeper username to get started.")
-
