@@ -239,19 +239,20 @@ if username:
                 st.markdown(f"<li><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
                 st.markdown(f"<li><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
 
-                                               # START: Side-by-side player images
-                st.markdown("<div class='player-row'>", unsafe_allow_html=True)
+                                                              # START: Side-by-side player images (single HTML render)
+                image_html = "<div class='player-row'>"
                 for name in selected_names:
                     selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
                     headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
-                    st.markdown(
-                        f"""<div class='player-block'>
-                                <img src='{headshot_url}' width='120'/><br><small>{name}</small>
-                            </div>""",
-                        unsafe_allow_html=True
-                    )
-                st.markdown("</div>", unsafe_allow_html=True)
+                    image_html += f"""
+                        <div class='player-block'>
+                            <img src='{headshot_url}' width='120'/><br><small>{name}</small>
+                        </div>
+                    """
+                image_html += "</div>"
+                st.markdown(image_html, unsafe_allow_html=True)
                 # END
+
 
                 st.markdown("<hr>", unsafe_allow_html=True)
                 try:
