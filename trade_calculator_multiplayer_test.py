@@ -35,7 +35,17 @@ def package_bonus(values):
         elif total >= 2000: base = 400
         else: base = 0
         return base - penalty
-
+      
+# --------------------
+# Dud Bonus Function
+# --------------------
+def dud_bonus(value):
+    if value <= 1000: return -800
+    elif value <= 1500: return -600
+    elif value <= 2000: return -400
+    elif value <= 2500: return -250
+    return 0
+  
 # --------------------
 # Trade Value Calculator
 # --------------------
