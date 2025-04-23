@@ -124,7 +124,7 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("Trade Settings")
     tolerance = st.slider("Match Tolerance (%)", 1, 15, 5)
-    qb_premium_setting = st.slider("QB Premium Bonus", 0, 1500, 300, step=25,
+    qb_premium_setting = st.slider("QB Premium Bonus", 0, 1500, 750, step=15,
                                    help="Extra value added to QBs for trade calculations.")
 
 league_id = None
