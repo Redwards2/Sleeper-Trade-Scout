@@ -163,7 +163,6 @@ def load_league_data(league_id, ktc_df):
 # --------------------
 # Streamlit UI Setup
 # --------------------
-st.set_page_config(page_title="KTC Trade Suggest", layout="wide")
 st.markdown("""
 <style>
 thead tr th, tbody tr td {
