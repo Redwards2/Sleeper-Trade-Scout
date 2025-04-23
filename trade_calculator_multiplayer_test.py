@@ -186,7 +186,7 @@ if username:
 
                 st.markdown("<hr>", unsafe_allow_html=True)
                 try:
-                    with st.expander("📈 1-for-1 Trade Suggestions"):
+                    with st.expander(f"📈 {len(selected_names)}-for-1 Trade Suggestions"):
                         one_low = int(adjusted_total * (1 - tolerance / 100))
                         one_high = int(adjusted_total * (1 + tolerance / 100))
 
@@ -201,7 +201,7 @@ if username:
                         else:
                             st.write("No 1-for-1 trades found in that range.")
 
-                    with st.expander("👥 2-for-1 Trade Suggestions"):
+                    with st.expander(f"👥 {len(selected_names)}-for-2 Trade Suggestions"):
                         adjusted_total_2for1 = adjusted_total + total_bonus
                         two_low = int(adjusted_total_2for1 * (1 - tolerance / 100))
                         two_high = int(adjusted_total_2for1 * (1 + tolerance / 100))
