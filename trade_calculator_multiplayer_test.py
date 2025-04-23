@@ -4,6 +4,61 @@ import requests
 from itertools import combinations
 
 # --------------------
+# Custom CSS Styling
+# --------------------
+st.set_page_config(page_title="Sleeper Trade Scout", layout="wide")
+st.markdown("""
+<style>
+/* Title Styling */
+#main-title {
+    text-align: center;
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 0.5em;
+    border-bottom: 3px solid #f63366;
+    padding-bottom: 10px;
+}
+
+/* Section Spacing */
+h3 {
+    margin-top: 40px;
+}
+
+/* Sticky Sidebar Header */
+section[data-testid="stSidebar"] h1 {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    z-index: 1;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Table Styling */
+thead tr th, tbody tr td {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Light Background on Trade Suggestions */
+[data-testid="stExpander"] > div {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --------------------
+# App Title
+# --------------------
+st.markdown("""
+<div id='main-title'>Sleeper Trade Scout</div>
+""", unsafe_allow_html=True)
+
+# --------------------
 # Package Bonus Function (for multi-player trade away)
 # --------------------
 def package_bonus(values):
@@ -35,7 +90,7 @@ def package_bonus(values):
         elif total >= 2000: base = 400
         else: base = 0
         return base - penalty
-      
+
 # --------------------
 # Dud Bonus Function
 # --------------------
@@ -45,7 +100,7 @@ def dud_bonus(value):
     elif value <= 2000: return -400
     elif value <= 2500: return -250
     return 0
-  
+
 # --------------------
 # Trade Value Calculator
 # --------------------
