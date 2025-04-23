@@ -245,7 +245,7 @@ if username:
                     selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
                     headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
                     st.markdown(
-                        f\"\"\"<div class='player-block'>
+                        f"""<div class='player-block'>
                                 <img src='{headshot_url}' width='120'/><br><small>{name}</small>
                             </div>\"\"\", unsafe_allow_html=True)
                 st.markdown("</div>", unsafe_allow_html=True)
