@@ -25,7 +25,7 @@ def package_bonus(values):
         else: return 0
     else:
         penalty = max(0, (num_players - 1) * 400)
-        if total >= 9000: base = 3200
+        if total >= 9000: base = 3500
         elif total >= 8000: base = 2700
         elif total >= 7000: base = 2200
         elif total >= 6000: base = 1800
@@ -46,7 +46,7 @@ def calculate_trade_value(players_df, selected_names, top_qbs, qb_premium_settin
         lambda row: qb_premium_setting if row["Position"] == "QB" and row["Player_Sleeper"] in top_qbs else 0,
         axis=1
     ).sum()
-    total_bonus = package_bonus(selected_rows["KTC_Value"].tolist())
+    total_bonus = package_bonus(selected_rows["KTC_Value"].tolist()) if len(selected_names) == 1 else 0
     adjusted_total = total_ktc + total_qb_premium  # for 1-for-1 use only
     return selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total
 
