@@ -6,6 +6,18 @@ from itertools import combinations
 # --------------------
 # Custom CSS Styling
 # --------------------
+# START: Quick CSS Test
+st.markdown("""
+    <style>
+    .test-style {
+        color: red;
+        font-size: 24px;
+        text-align: center;
+    }
+    </style>
+    <div class="test-style">🔧 This is a test message</div>
+""", unsafe_allow_html=True)
+# END
 st.set_page_config(page_title="Sleeper Trade Scout", layout="wide")
 st.markdown("""
 <style>
