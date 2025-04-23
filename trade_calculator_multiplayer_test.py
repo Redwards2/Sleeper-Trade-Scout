@@ -191,10 +191,15 @@ if username:
                         one_high = int(adjusted_total * (1 + tolerance / 100))
 
                         one_for_one = df[
-                            (df["KTC_Value"] >= one_low) &
-                            (df["KTC_Value"] <= one_high) &
+                           ((df["KTC_Value"] + df.apply(
+                                lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
+                            )) >= one_low) &
+                            ((df["KTC_Value"] + df.apply(
+                              lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
+                            )) <= one_high) &
                             (df["Team_Owner"] != owner)
-                        ][["Player_Sleeper", "Position", "Team", "KTC_Value", "Team_Owner"]]
+                       ][["Player_Sleeper", "Position", "Team", "KTC_Value", "Team_Owner"]]
+
 
                         if not one_for_one.empty:
                             st.dataframe(one_for_one.sort_values("KTC_Value", ascending=False).reset_index(drop=True))
