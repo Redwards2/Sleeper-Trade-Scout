@@ -239,19 +239,18 @@ if username:
                 st.markdown(f"<li><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
                 st.markdown(f"<li><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
 
-                                                                              # START: Proper inline-flex player image row
-                image_html = "<div class='player-row'>"
-                for name in selected_names:
+                                                        # START: Display player images in a single row using Streamlit columns
+                num_players = len(selected_names)
+                cols = st.columns(num_players)
+
+                for i, name in enumerate(selected_names):
                     selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
                     headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
-                    image_html += (
-                        f"<div class='player-block'>"
-                        f"<img src='{headshot_url}' width='120'/><br><small>{name}</small>"
-                        f"</div>"
-                    )
-                image_html += "</div>"
-                st.markdown(image_html, unsafe_allow_html=True)
+                    with cols[i]:
+                        st.image(headshot_url, width=120)
+                        st.caption(name)
                 # END
+
 
 
 
