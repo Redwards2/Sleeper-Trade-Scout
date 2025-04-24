@@ -426,9 +426,9 @@ if "selected_names" in locals() and selected_names:
                             receive_by_roster[rid] = []
 
                         for pid, rid in (drops or {}).items():
-                            give_by_roster[rid].append(player_pool.get(pid, {}).get("full_name", pid))
+                            give_by_roster[rid].append(player_pool.get(pid, {}).get("full_name") or format_pick_id(pid))
                         for pid, rid in (adds or {}).items():
-                            receive_by_roster[rid].append(player_pool.get(pid, {}).get("full_name", pid))
+                            receive_by_roster[rid].append(player_pool.get(pid, {}).get("full_name") or format_pick_id(pid))
 
                         st.markdown(f"<strong>Season:</strong> {season} &nbsp; <strong>Week:</strong> {week}", unsafe_allow_html=True)
                         for rid in roster_ids:
