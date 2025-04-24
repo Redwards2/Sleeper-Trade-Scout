@@ -359,6 +359,20 @@ def get_all_trades_from_league(league_id):
         else:
             break
 
+        # Inject rookie pick display names into player_pool based on trade data
+    all_ids = set()
+    for trade in all_trades:
+        all_ids.update((trade.get("adds") or {}).keys())
+        all_ids.update((trade.get("drops") or {}).keys())
+
+    for pid in all_ids:
+        if isinstance(pid, str) and pid.startswith("rookie_") and pid not in player_pool:
+            player_pool[pid] = {
+                "full_name": format_pick_id(pid),
+                "position": "PICK",
+                "team": ""
+            }
+
     return all_trades
 
 def filter_trades_for_player(trades, player_name, player_pool):
