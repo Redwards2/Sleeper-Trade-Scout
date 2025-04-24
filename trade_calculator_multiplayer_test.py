@@ -304,6 +304,16 @@ else:
     st.info("Enter your Sleeper username to get started.")
 
 # --------------------
+# Pick formatter for rookie picks
+# --------------------
+def format_pick_id(pid):
+    if pid.startswith("rookie_"):
+        parts = pid.split("_")  # example: rookie_1_04
+        if len(parts) == 3:
+            return f"{2025 if int(parts[1]) <= 4 else 2026} Round {parts[1]}.{parts[2]} Pick"
+    return pid
+
+# --------------------
 # Trade History Helpers
 # --------------------
 def get_all_trades_from_league(league_id):
@@ -384,7 +394,7 @@ if "selected_names" in locals() and selected_names:
                         adds = trade.get("adds") or {}
                         drops = trade.get("drops") or {}
                         season = trade.get("season", "?")
-                        added_items = [player_pool.get(pid, {}).get("full_name", pid) for pid in adds.keys()]
+                        added_items = [player_pool.get(pid, {}).get("full_name") or format_pick_id(pid) for pid in adds.keys()]
                         dropped_items = [player_pool.get(pid, {}).get("full_name", pid) for pid in drops.keys()]
 
                                                 # Build a descriptive sentence about the trade
