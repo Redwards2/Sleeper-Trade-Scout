@@ -173,6 +173,15 @@ def load_league_data(league_id, ktc_df):
                 "KTC_Value": ktc_value
             })
 
+    # Inject dummy player data for rookie picks
+    for pid in set(sum([roster.get("players", []) for roster in rosters], [])):
+        if isinstance(pid, str) and pid.startswith("rookie_"):
+            player_pool[pid] = {
+                "full_name": format_pick_id(pid),
+                "position": "PICK",
+                "team": ""
+            }
+
     return pd.DataFrame(data), player_pool
 
 # --------------------
