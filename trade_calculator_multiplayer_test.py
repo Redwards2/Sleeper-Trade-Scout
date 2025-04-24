@@ -221,6 +221,20 @@ if username:
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
 
+        # Inject rookie picks into player_pool if missing (from trades)
+        all_trades_preview = get_all_trades_from_league(league_id)
+        all_ids_preview = set()
+        for trade in all_trades_preview:
+            all_ids_preview.update((trade.get("adds") or {}).keys())
+            all_ids_preview.update((trade.get("drops") or {}).keys())
+        for pid in all_ids_preview:
+            if isinstance(pid, str) and pid.startswith("rookie_") and pid not in player_pool:
+                player_pool[pid] = {
+                    "full_name": format_pick_id(pid),
+                    "position": "PICK",
+                    "team": ""
+                }
+
         if not df.empty:
             top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
 
