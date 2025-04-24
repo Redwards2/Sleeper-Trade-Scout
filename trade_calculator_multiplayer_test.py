@@ -408,6 +408,20 @@ if "selected_names" in locals() and selected_names:
     if st.button("Show Trade History"):
         with st.spinner("Loading trade history..."):
             all_trades = get_all_trades_from_league(league_id)
+
+            # Inject rookie picks into player_pool if missing
+            all_ids = set()
+            for trade in all_trades:
+                all_ids.update((trade.get("adds") or {}).keys())
+                all_ids.update((trade.get("drops") or {}).keys())
+
+            for pid in all_ids:
+                if isinstance(pid, str) and pid.startswith("rookie_") and pid not in player_pool:
+                    player_pool[pid] = {
+                        "full_name": format_pick_id(pid),
+                        "position": "PICK",
+                        "team": ""
+                    }
             for name in selected_names:
                 player_trades = filter_trades_for_player(all_trades, name, player_pool)
                 st.subheader(f"Trade History for {name} ({len(player_trades)} found)")
