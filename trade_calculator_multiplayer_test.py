@@ -318,18 +318,23 @@ def get_all_trades_from_league(league_id):
     while current_league_id and current_league_id not in visited:
         visited.add(current_league_id)
 
+        league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}")
+        if league_info.status_code == 200:
+            season = league_info.json().get("season")
+        else:
+            break
+
         for week in range(0, 19):
             url = f"https://api.sleeper.app/v1/league/{current_league_id}/transactions/{week}"
             response = requests.get(url)
             if response.status_code == 200:
                 transactions = response.json()
                 trades = [
-                    dict(t, week=week, season=league_info.json().get("season"))
+                    dict(t, week=week, season=season)
                     for t in transactions if t.get("type") == "trade"
                 ]
                 all_trades.extend(trades)
 
-        league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}")
         if league_info.status_code == 200:
             current_league_id = league_info.json().get("previous_league_id")
         else:
