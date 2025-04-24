@@ -340,8 +340,8 @@ def filter_trades_for_player(trades, player_name, player_pool):
     """
     filtered = []
     for trade in trades:
-        added = trade.get("adds", {})
-        dropped = trade.get("drops", {})
+        added = trade.get("adds") or {}
+        dropped = trade.get("drops") or {}
         all_players_involved = list(added.keys()) + list(dropped.keys())
         for player_id in all_players_involved:
             sleeper_name = player_pool.get(player_id, {}).get("full_name", "")
