@@ -132,7 +132,80 @@ def calculate_trade_value(players_df, selected_names, top_qbs, qb_premium_settin
 # --------------------
 # Sleeper League Loader with KTC Matching
 # --------------------
-# (rest of original code continues here)
+# --------------------
+# Streamlit UI Setup
+# --------------------
+st.sidebar.header("Import Your League")
+username = st.sidebar.text_input("Enter your Sleeper username").strip()
+username_lower = username.lower()
+
+with st.sidebar:
+    st.markdown("---")
+    st.subheader("Trade Settings")
+    tolerance = st.slider("Match Tolerance (%)", 1, 15, 5)
+    qb_premium_setting = st.slider("QB Premium Bonus", 0, 1500, 750, step=50,
+                                   help="Extra value added to QBs for trade calculations.")
+
+league_id = None
+league_options = {}
+df = pd.DataFrame()
+
+if username:
+    try:
+        user_info_url = f"https://api.sleeper.app/v1/user/{username}"
+        user_response = requests.get(user_info_url, timeout=10)
+        user_response.raise_for_status()
+        user_id = user_response.json().get("user_id")
+
+        leagues_url = f"https://api.sleeper.app/v1/user/{user_id}/leagues/nfl/2025"
+        response = requests.get(leagues_url)
+        response.raise_for_status()
+        leagues = response.json()
+
+        league_options = {league['name']: league['league_id'] for league in leagues}
+        selected_league_name = st.sidebar.selectbox("Select a league", list(league_options.keys()))
+        league_id = league_options[selected_league_name]
+
+        ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
+        df, player_pool = load_league_data(league_id, ktc_df)
+
+        if not df.empty:
+            top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
+
+            user_players = df[df["Team_Owner"].str.lower() == username_lower].sort_values("Player_Sleeper")
+            selected_names = []
+
+            st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
+            position_order = ["QB", "RB", "WR", "TE"]
+            position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
+            cols = st.columns(2)
+
+            for position in position_order:
+                position_group = user_players[user_players["Position"] == position].sort_values("KTC_Value", ascending=False)
+                if not position_group.empty:
+                    with cols[position_col_map[position]]:
+                        st.markdown(f"**{position}**")
+                        for _, row in position_group.iterrows():
+                            label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
+                            if st.checkbox(label, key=row['Player_Sleeper']):
+                                selected_names.append(row['Player_Sleeper'])
+
+            if selected_names:
+                selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
+                    df, selected_names, top_qbs, qb_premium_setting
+                )
+                owner = selected_rows.iloc[0]["Team_Owner"]
+
+                st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
+                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><li><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
+                st.markdown(f"<li><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
+                st.markdown(f"<li><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
+                st.markdown(f"<li><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"⚠️ Something went wrong: {e}")
+else:
+    st.info("Enter your Sleeper username to get started.")
 
 # --------------------
 # Trade History Helpers
@@ -208,5 +281,3 @@ if "selected_names" in locals() and selected_names:
                 else:
                     st.write("No trades found involving this player.")
 # END
-
-                
