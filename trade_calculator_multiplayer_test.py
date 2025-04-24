@@ -181,18 +181,32 @@ def filter_trades_for_player(trades, player_name, player_pool):
                 break
     return filtered
 
-# START: Side-by-side player images block example (to insert into your trade UI logic)
-st.markdown("<div class='player-row'>", unsafe_allow_html=True)
-for name in selected_names:
-    selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
-    headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
-    st.markdown(
-        f"""<div class='player-block'>
-                <img src='{headshot_url}' width='120'/><br><small>{name}</small>
-            </div>""",
-        unsafe_allow_html=True
-    )
-st.markdown("</div>", unsafe_allow_html=True)
+# START: Side-by-side player images + trade history viewer
+if "selected_names" in locals() and selected_names:
+
+    # Images
+    num_players = len(selected_names)
+    cols = st.columns(num_players)
+    for i, name in enumerate(selected_names):
+        selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
+        headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
+        with cols[i]:
+            st.image(headshot_url, width=120)
+            st.caption(name)
+
+    # Trade History Viewer
+    if st.button("Show Trade History"):
+        with st.spinner("Loading trade history..."):
+            all_trades = get_all_trades_from_league(league_id)
+            for name in selected_names:
+                player_trades = filter_trades_for_player(all_trades, name, player_pool)
+                st.subheader(f"Trade History for {name} ({len(player_trades)} found)")
+                if player_trades:
+                    for trade in player_trades:
+                        rosters_involved = trade.get("roster_ids", [])
+                        st.markdown(f"- Week {trade.get('week', '?')} • Rosters: {rosters_involved}")
+                else:
+                    st.write("No trades found involving this player.")
 # END
 
                 # START: Trade history viewer
