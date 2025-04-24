@@ -391,13 +391,34 @@ if "selected_names" in locals() and selected_names:
                         added_names = [player_pool.get(pid, {}).get("full_name", pid) for pid in added_by.keys()]
                         dropped_names = [player_pool.get(pid, {}).get("full_name", pid) for pid in dropped_by.keys()]
 
-                        st.markdown(f"""
-                        <div style='margin-bottom: 1rem;'>
-                            <strong>Season:</strong> {season}<br>
-                            <strong>Week:</strong> {trade.get('week', '?')}<br>
-                            <strong>Trade:</strong> {teams[0]} traded away {', '.join(dropped_names)} to {teams[1]} for {', '.join(added_names)}
-                        </div>
-                        """, unsafe_allow_html=True)
+                        # Build a descriptive sentence using adds/drops by roster
+                        adds = trade.get("adds") or {}
+                        drops = trade.get("drops") or {}
+                        season = trade.get("season", "?")
+                        week = trade.get("week", "?")
+                        roster_ids = trade.get("roster_ids", [])
+
+                        owner_lookup = {int(row["Roster_ID"]): row["Team_Owner"] for _, row in df.iterrows()}
+
+                        give_by_roster = {}
+                        receive_by_roster = {}
+
+                        for rid in roster_ids:
+                            give_by_roster[rid] = []
+                            receive_by_roster[rid] = []
+
+                        for pid, rid in (drops or {}).items():
+                            give_by_roster[rid].append(player_pool.get(pid, {}).get("full_name", pid))
+                        for pid, rid in (adds or {}).items():
+                            receive_by_roster[rid].append(player_pool.get(pid, {}).get("full_name", pid))
+
+                        st.markdown(f"<strong>Season:</strong> {season} &nbsp; <strong>Week:</strong> {week}", unsafe_allow_html=True)
+                        for rid in roster_ids:
+                            giver = owner_lookup.get(rid, f"Team {rid}")
+                            received = ", ".join(receive_by_roster[rid]) or "nothing"
+                            given = ", ".join(give_by_roster[rid]) or "nothing"
+                            st.markdown(f"<strong>{giver}</strong> gave: {given} &nbsp;|&nbsp; received: {received}", unsafe_allow_html=True)
+                        st.markdown("<hr>", unsafe_allow_html=True)
                 else:
                     st.write("No trades found involving this player.")
 # END
