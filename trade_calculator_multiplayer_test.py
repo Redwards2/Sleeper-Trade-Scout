@@ -373,7 +373,21 @@ if "selected_names" in locals() and selected_names:
                 if player_trades:
                     for trade in player_trades:
                         rosters_involved = trade.get("roster_ids", [])
-                        st.markdown(f"- Week {trade.get('week', '?')} • Rosters: {rosters_involved}")
+                        adds = trade.get("adds") or {}
+                        drops = trade.get("drops") or {}
+                        season = trade.get("season", "?")
+                        added_items = [player_pool.get(pid, {}).get("full_name", pid) for pid in adds.keys()]
+                        dropped_items = [player_pool.get(pid, {}).get("full_name", pid) for pid in drops.keys()]
+
+                        st.markdown(f"""
+                        <div style='margin-bottom: 1rem;'>
+                            <strong>Season:</strong> {season}<br>
+                            <strong>Week:</strong> {trade.get('week', '?')}<br>
+                            <strong>Rosters:</strong> {rosters_involved}<br>
+                            <strong>Added:</strong> {', '.join(added_items) if added_items else 'N/A'}<br>
+                            <strong>Dropped:</strong> {', '.join(dropped_items) if dropped_items else 'N/A'}
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
                     st.write("No trades found involving this player.")
 # END
