@@ -379,13 +379,23 @@ if "selected_names" in locals() and selected_names:
                         added_items = [player_pool.get(pid, {}).get("full_name", pid) for pid in adds.keys()]
                         dropped_items = [player_pool.get(pid, {}).get("full_name", pid) for pid in drops.keys()]
 
+                                                # Build a descriptive sentence about the trade
+                        added_by = trade.get("adds", {})
+                        dropped_by = trade.get("drops", {})
+                        roster_ids = trade.get("roster_ids", [])
+
+                        # Reverse lookup for roster_id to team name
+                        owner_lookup = {int(row["Roster_ID"]): row["Team_Owner"] for _, row in df.iterrows()}
+                        teams = [owner_lookup.get(rid, f"Team {rid}") for rid in roster_ids]
+
+                        added_names = [player_pool.get(pid, {}).get("full_name", pid) for pid in added_by.keys()]
+                        dropped_names = [player_pool.get(pid, {}).get("full_name", pid) for pid in dropped_by.keys()]
+
                         st.markdown(f"""
                         <div style='margin-bottom: 1rem;'>
                             <strong>Season:</strong> {season}<br>
                             <strong>Week:</strong> {trade.get('week', '?')}<br>
-                            <strong>Rosters:</strong> {rosters_involved}<br>
-                            <strong>Added:</strong> {', '.join(added_items) if added_items else 'N/A'}<br>
-                            <strong>Dropped:</strong> {', '.join(dropped_items) if dropped_items else 'N/A'}
+                            <strong>Trade:</strong> {teams[0]} traded away {', '.join(dropped_names)} to {teams[1]} for {', '.join(added_names)}
                         </div>
                         """, unsafe_allow_html=True)
                 else:
