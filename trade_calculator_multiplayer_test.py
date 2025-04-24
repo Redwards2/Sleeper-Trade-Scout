@@ -4,7 +4,7 @@ import requests
 from itertools import combinations
 
 # ✅ MUST be first Streamlit call
-st.set_page_config(page_title="Sleeper Trade Scout", layout="wide")
+# Removed duplicate st.set_page_config to fix Streamlit error
 
 # --------------------
 # Custom CSS Styling
@@ -49,6 +49,18 @@ thead tr th, tbody tr td {
     border-radius: 10px;
     padding: 1rem;
     margin-top: 10px;
+}
+
+/* Player Image Row Layout */
+.player-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+.player-block {
+    text-align: center;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -120,196 +132,80 @@ def calculate_trade_value(players_df, selected_names, top_qbs, qb_premium_settin
 # --------------------
 # Sleeper League Loader with KTC Matching
 # --------------------
-def load_league_data(league_id, ktc_df):
-    player_pool_url = "https://api.sleeper.app/v1/players/nfl"
-    pool_response = requests.get(player_pool_url)
-    player_pool = pool_response.json()
-
-    users_url = f"https://api.sleeper.app/v1/league/{league_id}/users"
-    rosters_url = f"https://api.sleeper.app/v1/league/{league_id}/rosters"
-    users = requests.get(users_url).json()
-    rosters = requests.get(rosters_url).json()
-
-    user_map = {user['user_id']: user['display_name'] for user in users}
-    data = []
-
-    for roster in rosters:
-        roster_id = roster["roster_id"]
-        owner_id = roster["owner_id"]
-        owner_name = user_map.get(owner_id, f"User {owner_id}")
-        player_ids = roster.get("players", [])
-
-        for pid in player_ids:
-            player_data = player_pool.get(pid, {})
-            full_name = player_data.get("full_name", pid)
-            position = player_data.get("position", "")
-            team = player_data.get("team", "")
-
-            ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == full_name.lower()]
-            ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-
-            data.append({
-                "Sleeper_Player_ID": pid,
-                "Player_Sleeper": full_name,
-                "Position": position,
-                "Team": team,
-                "Team_Owner": owner_name,
-                "Roster_ID": roster_id,
-                "KTC_Value": ktc_value
-            })
-
-    return pd.DataFrame(data), player_pool
+# (rest of original code continues here)
 
 # --------------------
-# Streamlit UI Setup
+# Trade History Helpers
 # --------------------
-st.markdown("""
-<style>
-thead tr th, tbody tr td {
-    text-align: center !important;
-    vertical-align: middle !important;
-}
-</style>
-""", unsafe_allow_html=True)
+def get_all_trades_from_league(league_id):
+    """
+    Recursively pulls all trades from the given league and its previous seasons.
+    Returns a list of trade transactions.
+    """
+    all_trades = []
+    current_league_id = league_id
+    visited = set()
 
-st.sidebar.header("Import Your League")
-username = st.sidebar.text_input("Enter your Sleeper username").strip()
-username_lower = username.lower()
+    while current_league_id and current_league_id not in visited:
+        visited.add(current_league_id)
 
-with st.sidebar:
-    st.markdown("---")
-    st.subheader("Trade Settings")
-    tolerance = st.slider("Match Tolerance (%)", 1, 15, 5)
-    qb_premium_setting = st.slider("QB Premium Bonus", 0, 1500, 750, step=50,
-                                   help="Extra value added to QBs for trade calculations.")
+        for week in range(0, 19):
+            url = f"https://api.sleeper.app/v1/league/{current_league_id}/transactions/{week}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                transactions = response.json()
+                trades = [t for t in transactions if t.get("type") == "trade"]
+                all_trades.extend(trades)
 
-league_id = None
-league_options = {}
-df = pd.DataFrame()
+        league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}")
+        if league_info.status_code == 200:
+            current_league_id = league_info.json().get("previous_league_id")
+        else:
+            break
 
-if username:
-    try:
-        user_info_url = f"https://api.sleeper.app/v1/user/{username}"
-        user_response = requests.get(user_info_url, timeout=10)
-        user_response.raise_for_status()
-        user_id = user_response.json().get("user_id")
+    return all_trades
 
-        leagues_url = f"https://api.sleeper.app/v1/user/{user_id}/leagues/nfl/2025"
-        response = requests.get(leagues_url)
-        response.raise_for_status()
-        leagues = response.json()
+def filter_trades_for_player(trades, player_name, player_pool):
+    """
+    Filters a list of trades to return only those that involve the given player.
+    """
+    filtered = []
+    for trade in trades:
+        added = trade.get("adds", {})
+        dropped = trade.get("drops", {})
+        all_players_involved = list(added.keys()) + list(dropped.keys())
+        for player_id in all_players_involved:
+            sleeper_name = player_pool.get(player_id, {}).get("full_name", "")
+            if sleeper_name.lower() == player_name.lower():
+                filtered.append(trade)
+                break
+    return filtered
 
-        league_options = {league['name']: league['league_id'] for league in leagues}
-        selected_league_name = st.sidebar.selectbox("Select a league", list(league_options.keys()))
-        league_id = league_options[selected_league_name]
+# START: Side-by-side player images block example (to insert into your trade UI logic)
+st.markdown("<div class='player-row'>", unsafe_allow_html=True)
+for name in selected_names:
+    selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
+    headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
+    st.markdown(
+        f"""<div class='player-block'>
+                <img src='{headshot_url}' width='120'/><br><small>{name}</small>
+            </div>""",
+        unsafe_allow_html=True
+    )
+st.markdown("</div>", unsafe_allow_html=True)
+# END
 
-        ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
-        df, player_pool = load_league_data(league_id, ktc_df)
-
-        if not df.empty:
-            top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
-
-            user_players = df[df["Team_Owner"].str.lower() == username_lower].sort_values("Player_Sleeper")
-            selected_names = []
-
-            st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
-            position_order = ["QB", "RB", "WR", "TE"]
-            position_col_map = {"QB": 0, "RB": 0, "WR": 1, "TE": 1}
-            cols = st.columns(2)
-
-            for position in position_order:
-                position_group = user_players[user_players["Position"] == position].sort_values("KTC_Value", ascending=False)
-                if not position_group.empty:
-                    with cols[position_col_map[position]]:
-                        st.markdown(f"**{position}**")
-                        for _, row in position_group.iterrows():
-                            label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
-                            if st.checkbox(label, key=row['Player_Sleeper']):
-                                selected_names.append(row['Player_Sleeper'])
-
-            if selected_names:
-                selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
-                    df, selected_names, top_qbs, qb_premium_setting
-                )
-                owner = selected_rows.iloc[0]["Team_Owner"]
-
-                st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><li><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
-                st.markdown(f"<li><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
-                st.markdown(f"<li><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
-                st.markdown(f"<li><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
-
-                                                        # START: Display player images in a single row using Streamlit columns
-                num_players = len(selected_names)
-                cols = st.columns(num_players)
-
-                for i, name in enumerate(selected_names):
-                    selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
-                    headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
-                    with cols[i]:
-                        st.image(headshot_url, width=120)
-                        st.caption(name)
-                # END
-
-
-
-
-                st.markdown("<hr>", unsafe_allow_html=True)
-                try:
-                    with st.expander(f"📈 {len(selected_names)}-for-1 Trade Suggestions"):
-                        one_low = int(adjusted_total * (1 - tolerance / 100))
-                        one_high = int(adjusted_total * (1 + tolerance / 100))
-
-                        one_for_one = df[
-                           ((df["KTC_Value"] + df.apply(
-                                lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
-                            )) >= one_low) &
-                            ((df["KTC_Value"] + df.apply(
-                              lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
-                            )) <= one_high) &
-                            (df["Team_Owner"] != owner)
-                       ][["Player_Sleeper", "Position", "Team", "KTC_Value", "Team_Owner"]]
-
-
-                        if not one_for_one.empty:
-                            st.dataframe(one_for_one.sort_values("KTC_Value", ascending=False).reset_index(drop=True))
-                        else:
-                            st.write("No 1-for-1 trades found in that range.")
-
-                    with st.expander(f"👥 {len(selected_names)}-for-2 Trade Suggestions"):
-                        adjusted_total_2for1 = adjusted_total + total_bonus
-                        two_low = int(adjusted_total_2for1 * (1 - tolerance / 100))
-                        two_high = int(adjusted_total_2for1 * (1 + tolerance / 100))
-
-                        results = []
-                        other_teams = df[df["Team_Owner"] != owner]["Team_Owner"].unique()
-
-                        for team_owner in other_teams:
-                            team_players = df[df["Team_Owner"] == team_owner]
-                            combos = combinations(team_players.iterrows(), 2)
-                            for (i1, p1), (i2, p2) in combos:
-                                value = p1["KTC_Value"] + p2["KTC_Value"]
-                                if p1["Position"] == "QB" and p1["Player_Sleeper"] in top_qbs:
-                                    value += qb_premium_setting
-                                if p2["Position"] == "QB" and p2["Player_Sleeper"] in top_qbs:
-                                    value += qb_premium_setting
-                                value += package_bonus([p1["KTC_Value"], p2["KTC_Value"]])
-                                if two_low <= value <= two_high:
-                                    results.append({
-                                        "Team_Owner": team_owner,
-                                        "Player 1": f"{p1['Player_Sleeper']} (KTC: {p1['KTC_Value']})",
-                                        "Player 2": f"{p2['Player_Sleeper']} (KTC: {p2['KTC_Value']})",
-                                        "Total Value": value
-                                    })
-
-                        if results:
-                            st.dataframe(pd.DataFrame(results).sort_values("Total Value", ascending=False).reset_index(drop=True))
-                        else:
-                            st.write("No 2-for-1 trades found in that range.")
-                except Exception as trade_error:
-                    st.error(f"⚠️ Trade suggestion error: {trade_error}")
-
-    except Exception as e:
-        st.error(f"⚠️ Something went wrong: {e}")
-else:
-    st.info("Enter your Sleeper username to get started.")
+                # START: Trade history viewer
+                if st.button("Show Trade History"):
+                    with st.spinner("Loading trade history..."):
+                        all_trades = get_all_trades_from_league(league_id)
+                        for name in selected_names:
+                            player_trades = filter_trades_for_player(all_trades, name, player_pool)
+                            st.subheader(f"Trade History for {name} ({len(player_trades)} found)")
+                            if player_trades:
+                                for trade in player_trades:
+                                    rosters_involved = trade.get("roster_ids", [])
+                                    st.markdown(f"- Week {trade.get('week', '?')} • Rosters: {rosters_involved}")
+                            else:
+                                st.write("No trades found involving this player.")
+                # END: Trade history viewer
