@@ -209,17 +209,4 @@ if "selected_names" in locals() and selected_names:
                     st.write("No trades found involving this player.")
 # END
 
-                # START: Trade history viewer
-if st.button("Show Trade History"):
-    with st.spinner("Loading trade history..."):
-        all_trades = get_all_trades_from_league(league_id)
-        for name in selected_names:
-            player_trades = filter_trades_for_player(all_trades, name, player_pool)
-            st.subheader(f"Trade History for {name} ({len(player_trades)} found)")
-            if player_trades:
-                for trade in player_trades:
-                    rosters_involved = trade.get("roster_ids", [])
-                    st.markdown(f"- Week {trade.get('week', '?')} • Rosters: {rosters_involved}")
-            else:
-                st.write("No trades found involving this player.")
-# END: Trade history viewer
+                
