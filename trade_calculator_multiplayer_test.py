@@ -193,9 +193,8 @@ def load_league_data(league_id, ktc_df):
             round_ = pick.get("round")
             pick_num = pick.get("pick")
             if roster_id and season and round_ and pick_num:
-                pick_name = f"{season} Round {round_}.{str(pick_num).zfill(2)} Pick"
                 pick_id = f"rookie_{round_}_{str(pick_num).zfill(2)}"
-
+                pick_name = f"{season} Round {round_}.{str(pick_num).zfill(2)} Pick"
                 data.append({
                     "Sleeper_Player_ID": pick_id,
                     "Player_Sleeper": pick_name,
@@ -203,7 +202,7 @@ def load_league_data(league_id, ktc_df):
                     "Team": "",
                     "Team_Owner": user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}"),
                     "Roster_ID": roster_id,
-                    "KTC_Value": 0  # You can enhance by estimating pick values if wanted
+                    "KTC_Value": 0
                 })
 
     return pd.DataFrame(data), player_pool
