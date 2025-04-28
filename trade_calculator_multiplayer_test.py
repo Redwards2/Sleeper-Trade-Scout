@@ -314,19 +314,24 @@ if username:
                             team_players = df[df["Team_Owner"] == team_owner]
                             combos = combinations(team_players.iterrows(), 2)
                             for (i1, p1), (i2, p2) in combos:
-                                value = p1["KTC_Value"] + p2["KTC_Value"]
-                                if p1["Position"] == "QB" and p1["Player_Sleeper"] in top_qbs:
-                                    value += qb_premium_setting
-                                if p2["Position"] == "QB" and p2["Player_Sleeper"] in top_qbs:
-                                    value += qb_premium_setting
-                                # 🚫 No package bonus added to the 2-player side
-                                if two_low <= value <= two_high:
+                              # 🚫 Skip if either player alone has higher raw KTC than your selected package
+                              if p1["KTC_Value"] > total_ktc or p2["KTC_Value"] > total_ktc:
+                                  continue
+
+                              value = p1["KTC_Value"] + p2["KTC_Value"]
+                              if p1["Position"] == "QB" and p1["Player_Sleeper"] in top_qbs:
+                                  value += qb_premium_setting
+                              if p2["Position"] == "QB" and p2["Player_Sleeper"] in top_qbs:
+                                  value += qb_premium_setting
+                              # 🚫 No package bonus added to 2-for-1 side
+                              if two_low <= value <= two_high:
                                   results.append({
                                       "Team_Owner": team_owner,
                                       "Player 1": f"{p1['Player_Sleeper']} (KTC: {p1['KTC_Value']})",
                                       "Player 2": f"{p2['Player_Sleeper']} (KTC: {p2['KTC_Value']})",
-                                      "Total Value": value
+                                     "Total Value": value
                                   })
+
 
                         if results:
                             st.dataframe(pd.DataFrame(results).sort_values("Total Value", ascending=False).reset_index(drop=True))
