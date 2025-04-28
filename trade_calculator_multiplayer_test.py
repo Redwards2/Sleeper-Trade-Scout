@@ -191,10 +191,9 @@ def load_league_data(league_id, ktc_df):
             roster_id = pick.get("roster_id")
             season = pick.get("season")
             round_ = pick.get("round")
-            pick_num = pick.get("pick")
-            if roster_id and season and round_ and pick_num:
-                pick_id = f"rookie_{round_}_{str(pick_num).zfill(2)}"
-                pick_name = f"{season} Round {round_}.{str(pick_num).zfill(2)} Pick"
+            if roster_id and season and round_:
+                pick_name = f"{season} {ordinal(round_)} Round Pick"
+                pick_id = f"{season}_round_{round_}"  # Just a unique ID, not Sleeper ID
                 data.append({
                     "Sleeper_Player_ID": pick_id,
                     "Player_Sleeper": pick_name,
@@ -414,6 +413,12 @@ def get_all_trades_from_league(league_id):
             }
 
     return all_trades
+
+# --------------------
+# Pick formatter for rough rookie picks
+# --------------------
+def ordinal(n):
+    return "%d%s" % (n, "tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
 
 # --------------------
 # Pick formatter for rookie picks
