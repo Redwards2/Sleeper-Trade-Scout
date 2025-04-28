@@ -182,6 +182,30 @@ def load_league_data(league_id, ktc_df):
                 "team": ""
             }
 
+    # Fetch draft picks from Sleeper
+    picks_url = f"https://api.sleeper.app/v1/league/{league_id}/draft_picks"
+    picks_response = requests.get(picks_url)
+    if picks_response.status_code == 200:
+        draft_picks = picks_response.json()
+        for pick in draft_picks:
+            roster_id = pick.get("roster_id")
+            season = pick.get("season")
+            round_ = pick.get("round")
+            pick_num = pick.get("pick")
+            if roster_id and season and round_ and pick_num:
+                pick_name = f"{season} Round {round_}.{str(pick_num).zfill(2)} Pick"
+                pick_id = f"{season}_round_{round_}_pick_{pick_num}"
+
+                data.append({
+                    "Sleeper_Player_ID": pick_id,
+                    "Player_Sleeper": pick_name,
+                    "Position": "PICK",
+                    "Team": "",
+                    "Team_Owner": user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}"),
+                    "Roster_ID": roster_id,
+                    "KTC_Value": 0  # You can enhance by estimating pick values if wanted
+                })
+
     return pd.DataFrame(data), player_pool
 
 # --------------------
