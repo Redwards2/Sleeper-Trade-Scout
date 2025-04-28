@@ -182,27 +182,31 @@ def load_league_data(league_id, ktc_df):
                 "team": ""
             }
 
-    # Fetch draft picks from Sleeper
-    picks_url = f"https://api.sleeper.app/v1/league/{league_id}/draft_picks"
-    picks_response = requests.get(picks_url)
-    if picks_response.status_code == 200:
-        draft_picks = picks_response.json()
-        for pick in draft_picks:
-            roster_id = pick.get("roster_id")
-            season = pick.get("season")
-            round_ = pick.get("round")
-            if roster_id and season and round_:
-                pick_name = f"{season} {ordinal(round_)} Round Pick"
-                pick_id = f"{season}_round_{round_}"  # Just a unique ID, not Sleeper ID
-                data.append({
-                    "Sleeper_Player_ID": pick_id,
-                    "Player_Sleeper": pick_name,
-                    "Position": "PICK",
-                    "Team": "",
-                    "Team_Owner": user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}"),
-                    "Roster_ID": roster_id,
-                    "KTC_Value": 0
-                })
+    # Fetch previous league standings to assign rookie picks
+    league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
+    prev_league_id = league_info.get("previous_league_id")
+
+    pick_order = []
+    if prev_league_id:
+        prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
+        standings = sorted(prev_rosters, key=lambda x: x.get("settings", {}).get("final_standing", 999))
+        pick_order = [r["roster_id"] for r in standings if r.get("settings", {}).get("final_standing")]
+
+    # Assign 2025 1st round picks based on standings
+    for idx, roster_id in enumerate(reversed(pick_order)):  # Champion gets 1.12, last gets 1.01
+        pick_number = idx + 1
+        pick_name = f"2025 Pick 1.{str(pick_number).zfill(2)}"
+        pick_id = f"2025_pick_1_{str(pick_number).zfill(2)}"
+        owner_name = user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}")
+        data.append({
+            "Sleeper_Player_ID": pick_id,
+            "Player_Sleeper": pick_name,
+            "Position": "PICK",
+            "Team": "",
+            "Team_Owner": owner_name,
+            "Roster_ID": roster_id,
+            "KTC_Value": 0
+        })
 
     return pd.DataFrame(data), player_pool
 
