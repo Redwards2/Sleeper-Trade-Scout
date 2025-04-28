@@ -194,7 +194,7 @@ def load_league_data(league_id, ktc_df):
             pick_num = pick.get("pick")
             if roster_id and season and round_ and pick_num:
                 pick_name = f"{season} Round {round_}.{str(pick_num).zfill(2)} Pick"
-                pick_id = f"{season}_round_{round_}_pick_{pick_num}"
+                pick_id = f"rookie_{round_}_{str(pick_num).zfill(2)}"
 
                 data.append({
                     "Sleeper_Player_ID": pick_id,
