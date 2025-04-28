@@ -300,9 +300,12 @@ if username:
                             st.write("No 1-for-1 trades found in that range.")
 
                     with st.expander(f"👥 {len(selected_names)}-for-2 Trade Suggestions"):
-                        adjusted_total_2for1 = adjusted_total + total_bonus
-                        two_low = int(adjusted_total_2for1 * (1 - tolerance / 100))
-                        two_high = int(adjusted_total_2for1 * (1 + tolerance / 100))
+                        # START: Corrected 1-for-2 package bonus calculation
+                        your_side_total = total_ktc + package_bonus(selected_rows["KTC_Value"].tolist())
+                        two_low = int(your_side_total * (1 - tolerance / 100))
+                        two_high = int(your_side_total * (1 + tolerance / 100))
+                        # END
+
 
                         results = []
                         other_teams = df[df["Team_Owner"] != owner]["Team_Owner"].unique()
