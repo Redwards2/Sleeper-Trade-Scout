@@ -81,12 +81,12 @@ def package_bonus(values):
 
     if num_players == 1:
         if total >= 9000: return 3700
-        elif total >= 8500: return 3400
-        elif total >= 8000: return 3100
-        elif total >= 7500: return 2850
-        elif total >= 7000: return 2600
-        elif total >= 6500: return 2300
-        elif total >= 6000: return 2000
+        elif total >= 8500: return 3200
+        elif total >= 8000: return 2900
+        elif total >= 7500: return 2550
+        elif total >= 7000: return 2300
+        elif total >= 6500: return 2100
+        elif total >= 6000: return 1850
         elif total >= 5000: return 1650
         elif total >= 4000: return 1300
         elif total >= 3000: return 1000
