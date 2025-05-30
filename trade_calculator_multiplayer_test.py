@@ -286,23 +286,22 @@ if username:
         # Start X (number of starting spots)
         start_x = len(starting_lineup)
         
-        # Scoring settings
+       # Scoring settings (PPR and TEP)
         scoring = league_info.get("scoring_settings", {})
-        rec = scoring.get("rec", 1.0)
+        rec = float(scoring.get("rec", 1.0))
+        rec_te = float(scoring.get("rec_te", rec))
+        
+        # PPR type label (show 1 decimal for fractional)
         if rec == 1.0:
             ppr_type = "PPR"
         elif rec == 0.5:
             ppr_type = "Half PPR"
         else:
-            ppr_type = f"{rec} PPR"
+            ppr_type = f"{rec:.2f} PPR".rstrip('0').rstrip('.')  # e.g., "0.75 PPR"
         
-        # Tight End Premium (TEP)
-        scoring = league_info.get("scoring_settings", {})
-        rec = float(scoring.get("rec", 1.0))
-        rec_te = float(scoring.get("rec_te", rec))
-        
+        # TEP label
         if rec_te > rec:
-            tep_str = f"{rec_te:g} TEP"
+            tep_str = f"{rec_te:.2f} TEP".rstrip('0').rstrip('.')
         else:
             tep_str = ""
 
