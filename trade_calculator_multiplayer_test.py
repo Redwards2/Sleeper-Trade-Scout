@@ -298,7 +298,10 @@ if username:
         
         # Tight End Premium (TEP)
         rec_te = scoring.get("rec_te", rec)
-        tep = "TEP" if rec_te > rec else ""
+        if rec_te > rec:
+            tep = f"{rec_te} TEP"
+        else:
+            tep = ""
         
         # Build and show description
         league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep} {format_type} Start {start_x}"
