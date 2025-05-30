@@ -288,9 +288,10 @@ if username:
         
        # Scoring settings (PPR and TEP)
         scoring = league_info.get("scoring_settings", {})
+        st.write("DEBUG scoring_settings:", scoring)   # <--- ADD THIS LINE HERE
         rec = float(scoring.get("rec", 1.0))
         rec_te = float(scoring.get("rec_te", 0))
-        
+
         # PPR type label
         if rec == 1.0:
             ppr_type = "PPR"
