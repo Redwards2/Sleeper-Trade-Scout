@@ -258,6 +258,11 @@ if username:
             league_type = "Dynasty"
         else:
             league_type = "Redraft"
+        # Best Ball or Lineup
+        if league_info.get("settings", {}).get("best_ball", 0) == 1:
+            format_type = "Best Ball"
+        else:
+            format_type = "Lineup"
 
         # Get the roster positions list (starting lineup)
         positions = league_info.get("roster_positions", [])
@@ -296,7 +301,7 @@ if username:
         tep = "TEP" if rec_te > rec else ""
         
         # Build and show description
-        league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep} Start {start_x}"
+        league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep} {format_type} Start {start_x}"
         st.markdown(f"<div style='font-size:20px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
 
 
