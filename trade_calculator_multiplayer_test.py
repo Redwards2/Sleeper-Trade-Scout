@@ -246,21 +246,19 @@ if username:
 
         # Find the selected league's info object
         league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
-        
-      # --- League Details Display ---
 
-        # Number of teams
+        # Number of Teams
         num_teams = league_info.get("total_rosters", "?")
         
         # Dynasty or Redraft
         league_type = league_info.get("settings", {}).get("type", None)
         if not league_type:
-            league_type = "Dynasty" if "dynasty" in league_info['name'].lower() else "Redraft"
+            league_type = "Dynasty" if "dynasty" in league_info.get('name', '').lower() else "Redraft"
         
-        # Get the roster positions list
-        positions = league_info.get("settings", {}).get("roster_positions", [])
+        # Get the roster positions list (starting lineup)
+        positions = league_info.get("roster_positions", [])
         
-        # Find starting lineup (count only before any bench slots)
+        # Only count spots before first bench slot for starters
         bench_tags = {"BN", "BE", "IR", "TAXI"}
         try:
             first_bench_index = next(i for i, pos in enumerate(positions) if pos in bench_tags)
@@ -296,6 +294,7 @@ if username:
         # Build and show description
         league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep} Start {start_x}"
         st.markdown(f"<div style='font-size:20px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
+
 
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
