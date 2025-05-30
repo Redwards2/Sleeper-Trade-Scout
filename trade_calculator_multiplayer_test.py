@@ -287,12 +287,11 @@ if username:
         start_x = len(starting_lineup)
         
        # Scoring settings (PPR and TEP)
-        scoring = league_info.get("scoring_settings", {})
-        st.write("DEBUG scoring_settings:", scoring)   # <--- ADD THIS LINE HERE
+       scoring = league_info.get("scoring_settings", {})
         rec = float(scoring.get("rec", 1.0))
-        rec_te = float(scoring.get("rec_te", 0))
-
-        # PPR type label
+        rec_te = float(scoring.get("bonus_rec_te", 0))
+        
+        # PPR label
         if rec == 1.0:
             ppr_type = "PPR"
         elif rec == 0.5:
@@ -300,7 +299,7 @@ if username:
         else:
             ppr_type = f"{rec:.2f} PPR".rstrip('0').rstrip('.')
         
-        # TEP label (ALWAYS shown, even if 0.00)
+        # TEP label (always display)
         tep_str = f"{rec_te:.2f} TEP".rstrip('0').rstrip('.')
 
         # Build and show description
