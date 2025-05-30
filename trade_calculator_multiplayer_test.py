@@ -244,10 +244,54 @@ if username:
         selected_league_name = st.sidebar.selectbox("Select a league", list(league_options.keys()))
         league_id = league_options[selected_league_name]
 
+        # Find the selected league's info object
+        league_info = next(l for l in leagues if l['name'] == selected_league_name)
+        
+        # Number of Teams
+        num_teams = league_info.get("total_rosters", "?")
+        
+        # Dynasty or Redraft
+        league_type = league_info.get("settings", {}).get("type", None)
+        if not league_type:
+            league_type = "Dynasty" if "dynasty" in league_info['name'].lower() else "Redraft"
+        
+        # QB Format
+        positions = league_info.get("settings", {}).get("roster_positions", [])
+        num_qb = positions.count("QB")
+        is_superflex = "SUPER_FLEX" in positions
+        if is_superflex:
+            qb_format = "Superflex"
+        elif num_qb > 1:
+            qb_format = "2QB"
+        else:
+            qb_format = "1QB"
+        
+        # PPR or Half PPR
+        scoring = league_info.get("scoring_settings", {})
+        rec = scoring.get("rec", 1.0)
+        if rec == 1.0:
+            ppr_type = "PPR"
+        elif rec == 0.5:
+            ppr_type = "Half PPR"
+        else:
+            ppr_type = f"{rec} PPR"
+        
+        # TEP
+        rec_te = scoring.get("rec_te", rec)
+        tep = "TEP" if rec_te > rec else ""
+        
+        # Start X
+        positions_to_count = ["QB", "RB", "WR", "TE", "FLEX", "SUPER_FLEX"]
+        start_positions = [p for p in positions if p in positions_to_count]
+        start_x = len(start_positions)
+        
+        # Build the final string and display it
+        league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep} Start {start_x}"
+        st.markdown(f"<div style='font-size:20px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
+
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
 
-        
         if not df.empty:
             top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
 
