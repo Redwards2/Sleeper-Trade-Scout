@@ -251,9 +251,10 @@ if username:
         num_teams = league_info.get("total_rosters", "?")
         
         # Dynasty or Redraft
-        league_type = league_info.get("settings", {}).get("type", None)
-        if not league_type:
-            league_type = "Dynasty" if "dynasty" in league_info.get('name', '').lower() else "Redraft"
+        if "dynasty" in league_info.get('name', '').lower():
+            league_type = "Dynasty"
+        else:
+            league_type = "Redraft"
         
         # Get the roster positions list (starting lineup)
         positions = league_info.get("roster_positions", [])
