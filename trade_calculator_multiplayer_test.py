@@ -289,21 +289,18 @@ if username:
        # Scoring settings (PPR and TEP)
         scoring = league_info.get("scoring_settings", {})
         rec = float(scoring.get("rec", 1.0))
-        rec_te = float(scoring.get("rec_te", rec))
+        rec_te = float(scoring.get("rec_te", 0))
         
-        # PPR type label (show 1 decimal for fractional)
+        # PPR type label
         if rec == 1.0:
             ppr_type = "PPR"
         elif rec == 0.5:
             ppr_type = "Half PPR"
         else:
-            ppr_type = f"{rec:.2f} PPR".rstrip('0').rstrip('.')  # e.g., "0.75 PPR"
+            ppr_type = f"{rec:.2f} PPR".rstrip('0').rstrip('.')
         
-        # TEP label
-        if rec_te > rec:
-            tep_str = f"{rec_te:.2f} TEP".rstrip('0').rstrip('.')
-        else:
-            tep_str = ""
+        # TEP label (ALWAYS shown, even if 0.00)
+        tep_str = f"{rec_te:.2f} TEP".rstrip('0').rstrip('.')
 
         # Build and show description
         league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep_str} {format_type} Start {start_x}"
