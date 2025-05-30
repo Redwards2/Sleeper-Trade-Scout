@@ -247,7 +247,9 @@ if username:
         # Find the selected league's info object
         league_info = next(l for l in leagues if l['name'] == selected_league_name)
         
-        # Number of Teams
+      # --- League Details Display ---
+
+        # Number of teams
         num_teams = league_info.get("total_rosters", "?")
         
         # Dynasty or Redraft
@@ -255,18 +257,29 @@ if username:
         if not league_type:
             league_type = "Dynasty" if "dynasty" in league_info['name'].lower() else "Redraft"
         
-        # QB Format
+        # Get the roster positions list
         positions = league_info.get("settings", {}).get("roster_positions", [])
-        num_qb = positions.count("QB")
-        is_superflex = "SUPER_FLEX" in positions
-        if is_superflex:
+        
+        # Find starting lineup (count only before any bench slots)
+        bench_tags = {"BN", "BE", "IR", "TAXI"}
+        try:
+            first_bench_index = next(i for i, pos in enumerate(positions) if pos in bench_tags)
+            starting_lineup = positions[:first_bench_index]
+        except StopIteration:
+            starting_lineup = positions
+        
+        # QB Format
+        if "QB" in starting_lineup and "SUPER_FLEX" in starting_lineup:
             qb_format = "Superflex"
-        elif num_qb > 1:
+        elif starting_lineup.count("QB") > 1:
             qb_format = "2QB"
         else:
             qb_format = "1QB"
         
-        # PPR or Half PPR
+        # Start X (number of starting spots)
+        start_x = len(starting_lineup)
+        
+        # Scoring settings
         scoring = league_info.get("scoring_settings", {})
         rec = scoring.get("rec", 1.0)
         if rec == 1.0:
@@ -276,16 +289,11 @@ if username:
         else:
             ppr_type = f"{rec} PPR"
         
-        # TEP
+        # Tight End Premium (TEP)
         rec_te = scoring.get("rec_te", rec)
         tep = "TEP" if rec_te > rec else ""
         
-        # Start X
-        positions_to_count = ["QB", "RB", "WR", "TE", "FLEX", "SUPER_FLEX"]
-        start_positions = [p for p in positions if p in positions_to_count]
-        start_x = len(start_positions)
-        
-        # Build the final string and display it
+        # Build and show description
         league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep} Start {start_x}"
         st.markdown(f"<div style='font-size:20px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
 
