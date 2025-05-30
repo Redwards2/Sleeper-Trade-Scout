@@ -245,7 +245,7 @@ if username:
         league_id = league_options[selected_league_name]
 
         # Find the selected league's info object
-        league_info = next(l for l in leagues if l['name'] == selected_league_name)
+        league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
         
       # --- League Details Display ---
 
