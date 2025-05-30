@@ -297,14 +297,17 @@ if username:
             ppr_type = f"{rec} PPR"
         
         # Tight End Premium (TEP)
-        rec_te = scoring.get("rec_te", rec)
-        if rec_te > rec:
-            tep = f"{rec_te} TEP"
-        else:
-            tep = ""
+        scoring = league_info.get("scoring_settings", {})
+        rec = float(scoring.get("rec", 1.0))
+        rec_te = float(scoring.get("rec_te", rec))
         
+        if rec_te > rec:
+            tep_str = f"{rec_te:g} TEP"
+        else:
+            tep_str = ""
+
         # Build and show description
-        league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep} {format_type} Start {start_x}"
+        league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep_str} {format_type} Start {start_x}"
         st.markdown(f"<div style='font-size:20px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
 
 
