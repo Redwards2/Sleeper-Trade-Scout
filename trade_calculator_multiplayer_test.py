@@ -286,26 +286,25 @@ if username:
         # Start X (number of starting spots)
         start_x = len(starting_lineup)
         
-        # Scoring settings (PPR and TEP)
+       # Scoring settings (PPR and TEP)
         scoring = league_info.get("scoring_settings", {})
         rec = float(scoring.get("rec", 1.0))
         rec_te = float(scoring.get("bonus_rec_te", 0))
-    
-       # PPR label
+        
+        # PPR label
         if rec == 1.0:
             ppr_type = "PPR"
         elif rec == 0.5:
             ppr_type = "Half PPR"
         else:
             ppr_type = f"{rec:.2f} PPR".rstrip('0').rstrip('.')
-    
+        
         # TEP label (always display)
-        tep_str = f"{rec_te:.2f} TEP".rstrip('0').rstrip('.'))
-
+        tep_str = f"{rec_te:.2f} TEP".rstrip('0').rstrip('.')
+        
         # Build and show description
         league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep_str} {format_type} Start {start_x}"
         st.markdown(f"<div style='font-size:20px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
-
 
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
