@@ -325,6 +325,7 @@ if username:
 
             st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
             # Group players by position
+            st.write("Positions found:", user_players["Position"].unique())
             positions = ['QB', 'RB', 'WR', 'TE']
             position_columns = st.columns(4)
             selected_players = []
