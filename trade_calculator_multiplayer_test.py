@@ -334,8 +334,8 @@ if username:
                     st.markdown(f"**{pos}**")
                     pos_players = user_players[user_players["Position"] == pos]
                     for _, row in pos_players.iterrows():
-                        label = f"{row['Player_Sleeper']}<br><small>(KTC: {row['KTC_Value']})"
-                        if st.checkbox(label, key=row['Sleeper_Player_ID']):
+                        label = f"<strong>{row['Player_Sleeper']}</strong><br><small>(KTC: {row['KTC_Value']})</small>"
+                        if st.checkbox(label, key=row['Sleeper_Player_ID'], unsafe_allow_html=True):
                             selected_players.append(row['Player_Sleeper'])
 
             if selected_names:
