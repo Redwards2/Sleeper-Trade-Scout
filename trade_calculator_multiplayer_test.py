@@ -132,9 +132,6 @@ def calculate_trade_value(players_df, selected_names, top_qbs, qb_premium_settin
 # --------------------
 # Sleeper League Loader with KTC Matching
 # --------------------
-# --------------------
-# Sleeper League Loader with KTC Matching
-# --------------------
 def load_league_data(league_id, ktc_df):
     player_pool_url = "https://api.sleeper.app/v1/players/nfl"
     pool_response = requests.get(player_pool_url)
