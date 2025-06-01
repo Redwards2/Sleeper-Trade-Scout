@@ -331,9 +331,15 @@ if username:
                     st.markdown(f"**{pos}**")
                     pos_players = user_players[user_players["Position"] == pos]
                     for _, row in pos_players.iterrows():
-                        label = f"<strong>{row['Player_Sleeper']}</strong><br><small>(KTC: {row['KTC_Value']})</small>"
-                        if st.checkbox(label, key=row['Sleeper_Player_ID'], unsafe_allow_html=True):
+                        key = f"cb_{row['Sleeper_Player_ID']}"
+                        checked = st.checkbox("", key=key)
+                        if checked:
                             selected_players.append(row['Player_Sleeper'])
+                        st.markdown(
+                            f"<div style='line-height:1.2; margin-top:-35px; margin-bottom:10px;'>"
+                            f"<strong>{row['Player_Sleeper']}</strong><br><small>(KTC: {row['KTC_Value']})</small></div>",
+                            unsafe_allow_html=True
+                        )
 
             if selected_names:
                 selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
