@@ -154,6 +154,7 @@ def load_league_data(league_id, ktc_df):
         owner_name = user_map.get(owner_id, f"User {owner_id}")
         player_ids = roster.get("players", [])
 
+        print("✅ running edited file")  # Add this temporarily
         for pid in player_ids:
             if pid in player_pool:
                 player_data = player_pool[pid]
