@@ -325,7 +325,6 @@ if username:
 
             st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
             # Group players by position
-            st.write("Positions found:", user_players["Position"].unique())
             positions = ['QB', 'RB', 'WR', 'TE']
             position_columns = st.columns(4)
             selected_players = []
@@ -335,7 +334,7 @@ if username:
                     st.markdown(f"**{pos}**")
                     pos_players = user_players[user_players["Position"] == pos]
                     for _, row in pos_players.iterrows():
-                        label = f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})"
+                        label = f"{row['Player_Sleeper']}<br><small>(KTC: {row['KTC_Value']})"
                         if st.checkbox(label, key=row['Sleeper_Player_ID']):
                             selected_players.append(row['Player_Sleeper'])
 
