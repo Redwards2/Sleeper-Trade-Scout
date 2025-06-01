@@ -154,15 +154,22 @@ def load_league_data(league_id, ktc_df):
         owner_name = user_map.get(owner_id, f"User {owner_id}")
         player_ids = roster.get("players", [])
 
-        for pid in player_ids:
-            player_data = player_pool.get(pid, {})
-            full_name = player_data.get("full_name", pid)
-            position = player_data.get("position", "")
-            team = player_data.get("team", "")
-
+        ffor pid in player_ids:
+            if pid in player_pool:
+                player_data = player_pool[pid]
+                full_name = player_data.get("full_name", pid)
+                position = player_data.get("position", "")
+                team = player_data.get("team", "")
+            elif isinstance(pid, str) and pid.startswith("rookie_"):
+                full_name = format_pick_id(pid)
+                position = "PICK"
+                team = ""
+            else:
+                continue  # Unknown entry; skip
+        
             ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == full_name.lower()]
             ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-
+        
             data.append({
                 "Sleeper_Player_ID": pid,
                 "Player_Sleeper": full_name,
