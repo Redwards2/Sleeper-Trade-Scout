@@ -55,7 +55,6 @@ OMIT_SCORING_KEYS = {
     "st_ff"
 }
 
-# ---- Pretty labels for only the keys you want to show ----
 PRETTY_SCORING_LABELS = {
     "rec": "Points Per Reception (PPR)",
     "bonus_rec_te": "TE Reception Bonus (TEP)",
@@ -71,6 +70,18 @@ PRETTY_SCORING_LABELS = {
     "pass_2pt": "2pt Conversion (Pass)",
     "rec_2pt": "2pt Conversion (Reception)",
     "rush_2pt": "2pt Conversion (Rush)",
+    "pass_int": "Pass Int",
+    "bonus_pass_yd_400": "400+ Yard Passing Bonus",
+    "rush_td_50p": "50+ Yard Rush TD Bonus",
+    "pass_td_40p": "40+ Yard Pass TD Bonus",
+    "pass_td_50p": "50+ Yard Pass TD Bonus",
+    "rec_40p": "40+ Yard Rec Bonus",
+    "pass_cmp_40p": "40+ Yard Pass Cmp Bonus",
+    "rec_td_40p": "40+ Yard Rec TD Bonus",
+    "rec_td_50p": "50+ Yard Rec TD Bonus",
+    "bonus_rush_yd_200": "200+ Yard Rushing Game Bonus",
+    "rush_40p": "40+ Yard Rush Bonus",
+    "rush_td_40p": "40+ Yard Rush TD Bonus",
     # Add more as needed!
 }
 
