@@ -55,6 +55,25 @@ OMIT_SCORING_KEYS = {
     "st_ff"
 }
 
+# ---- Pretty labels for only the keys you want to show ----
+PRETTY_SCORING_LABELS = {
+    "rec": "Points Per Reception (PPR)",
+    "bonus_rec_te": "TE Reception Bonus (TEP)",
+    "pass_td": "Passing TD",
+    "rush_td": "Rushing TD",
+    "rec_td": "Receiving TD",
+    "fum": "Fumble Lost",
+    "fum_lost": "Fumbles Lost",
+    "pass_yd": "Passing Yards",
+    "rush_yd": "Rushing Yards",
+    "rec_yd": "Receiving Yards",
+    "bonus_rec_yd_200": "200+ Receiving Yards Bonus",
+    "pass_2pt": "2pt Conversion (Pass)",
+    "rec_2pt": "2pt Conversion (Reception)",
+    "rush_2pt": "2pt Conversion (Rush)",
+    # Add more as needed!
+}
+
 # ✅ MUST be first Streamlit call
 # Removed duplicate st.set_page_config to fix Streamlit error
 
