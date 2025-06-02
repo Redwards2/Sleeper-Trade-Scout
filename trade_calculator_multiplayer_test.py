@@ -317,29 +317,44 @@ if username:
         if not df.empty:
             top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
 
-            user_players = df[df["Team_Owner"].str.lower() == username_lower].sort_values("Player_Sleeper")
+            # Sort players by KTC descending
+            user_players = df[df["Team_Owner"].str.lower() == username_lower].sort_values("KTC_Value", ascending=False)
             selected_names = []
-
+            
             st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
-            # Group players by position
-            positions = ['QB', 'RB', 'WR', 'TE']
-            position_columns = st.columns(4)
+            
+            positions = ['QB', 'RB', 'WR', 'TE', 'PICK']
+            display_map = {'QB': 'QB', 'RB': 'RB', 'WR': 'WR', 'TE': 'TE', 'PICK': 'Draft Picks'}
+            position_columns = st.columns(len(positions))
             selected_players = []
             
             for idx, pos in enumerate(positions):
                 with position_columns[idx]:
-                    st.markdown(f"**{pos}**")
+                    st.markdown(f"**{display_map[pos]}**")
                     pos_players = user_players[user_players["Position"] == pos]
+            
                     for _, row in pos_players.iterrows():
                         key = f"cb_{row['Sleeper_Player_ID']}"
-                        checked = st.checkbox("", key=key)
-                        if checked:
-                            selected_players.append(row['Player_Sleeper'])
-                        st.markdown(
-                            f"<div style='line-height:1.2; margin-top:-35px; margin-bottom:10px;'>"
-                            f"<strong>{row['Player_Sleeper']}</strong><br><small>(KTC: {row['KTC_Value']})</small></div>",
-                            unsafe_allow_html=True
-                        )
+                        name = row['Player_Sleeper']
+                        ktc = row['KTC_Value']
+            
+                        # HTML label formatted to look like a 2-line label
+                        label_html = f"<strong>{name}</strong><br><small>(KTC: {ktc})</small>"
+            
+                        with st.container():
+                            col_cb, col_lbl = st.columns([1, 4])
+                            with col_cb:
+                                checked = st.checkbox(" ", key=key)
+                            with col_lbl:
+                                st.markdown(label_html, unsafe_allow_html=True)
+            
+                            if checked:
+                                selected_players.append(name)
+                                st.markdown(
+                                    f"<div style='line-height:1.2; margin-top:-35px; margin-bottom:10px;'>"
+                                    f"<strong>{row['Player_Sleeper']}</strong><br><small>(KTC: {row['KTC_Value']})</small></div>",
+                                    unsafe_allow_html=True
+                                )
 
             if selected_names:
                 selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
