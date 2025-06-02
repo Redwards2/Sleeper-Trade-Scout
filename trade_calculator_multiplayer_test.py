@@ -262,7 +262,6 @@ if username:
         league_options = {league['name']: league['league_id'] for league in leagues}
         selected_league_name = st.sidebar.selectbox("Select a League", list(league_options.keys()))
         league_id = league_options[selected_league_name]
-        st.sidebar.markdown(f"<div style='font-size:16px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
         
         # List custom scoring settings
         non_default_settings = []
@@ -337,7 +336,19 @@ if username:
         # Build and show description
         league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep_str} {format_type} Start {start_x}"
         st.markdown(f"<div style='font-size:20px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
+        st.sidebar.markdown(f"<div style='font-size:16px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
 
+        # List custom scoring settings
+        non_default_settings = []
+        for k, v in scoring.items():
+            default_val = DEFAULT_SCORING.get(k)
+            if default_val is None or float(v) != float(default_val):
+                non_default_settings.append((k, v))
+        
+        if non_default_settings:
+            st.sidebar.markdown("**Custom Scoring Settings:**")
+            for k, v in non_default_settings:
+                st.sidebar.markdown(f"<span style='color: #39d353; font-weight: bold'>{k}: {v}</span>", unsafe_allow_html=True)
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
 
