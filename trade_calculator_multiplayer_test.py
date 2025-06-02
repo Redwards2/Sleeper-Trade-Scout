@@ -3,6 +3,20 @@ import pandas as pd
 import requests
 from itertools import combinations
 
+DEFAULT_SCORING = {
+    "rec": 1.0,              # PPR
+    "bonus_rec_te": 0.0,     # TE Premium
+    "pass_td": 4.0,          # Passing TDs
+    "rush_td": 6.0,          # Rushing TDs
+    "rec_td": 6.0,           # Receiving TDs
+    "fum": -2.0,             # Fumble lost
+    "pass_yd": 0.04,         # 1 per 25
+    "rush_yd": 0.1,          # 1 per 10
+    "rec_yd": 0.1,           # 1 per 10
+    "int": -2.0,             # Interception
+    # Add more as needed for your league type!
+}
+
 # ✅ MUST be first Streamlit call
 # Removed duplicate st.set_page_config to fix Streamlit error
 
@@ -246,8 +260,21 @@ if username:
         leagues = response.json()
 
         league_options = {league['name']: league['league_id'] for league in leagues}
-        selected_league_name = st.sidebar.selectbox("Select a league", list(league_options.keys()))
+        selected_league_name = st.sidebar.selectbox("Select a League", list(league_options.keys()))
         league_id = league_options[selected_league_name]
+        st.sidebar.markdown(f"<div style='font-size:16px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
+        
+        # List custom scoring settings
+        non_default_settings = []
+        for k, v in scoring.items():
+            default_val = DEFAULT_SCORING.get(k)
+            if default_val is None or float(v) != float(default_val):
+                non_default_settings.append((k, v))
+        
+        if non_default_settings:
+            st.sidebar.markdown("**Custom Scoring Settings:**")
+            for k, v in non_default_settings:
+                st.sidebar.markdown(f"<span style='color: #39d353; font-weight: bold'>{k}: {v}</span>", unsafe_allow_html=True)
 
         # Find the selected league's info object
         league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
