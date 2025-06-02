@@ -400,6 +400,7 @@ if username:
         if non_default_settings:
             st.sidebar.markdown("**Custom Scoring Settings:**")
             for k, v in non_default_settings:
+                pretty_k = PRETTY_SCORING_LABELS.get(k, k.replace("_", " ").title())
                 st.sidebar.markdown(f"<span style='color: #39d353; font-weight: bold'>{k}: {v}</span>", unsafe_allow_html=True)
 
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
