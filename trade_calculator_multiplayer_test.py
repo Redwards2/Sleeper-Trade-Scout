@@ -17,6 +17,44 @@ DEFAULT_SCORING = {
     # Add more as needed for your league type!
 }
 
+OMIT_SCORING_KEYS = {
+    "sack",
+    "fgm_40_49",
+    "pts_allow_0",
+    "pass_2pt",
+    "st_td",
+    "fgm_30_39",
+    "xpmiss",
+    "rec_2pt",
+    "st_fum_rec",
+    "fgmiss",
+    "ff",
+    "pts_allow_14_20",
+    "fgm_0_19",
+    "int",
+    "def_st_fum_rec",
+    "fum_lost",
+    "pts_allow_1_6",
+    "fgm_20_29",
+    "pts_allow_21_27",
+    "xpm",
+    "rush_2pt",
+    "fum_rec",
+    "bonus_rec_yd_200",
+    "def_st_td",
+    "fgm_50p",
+    "def_td",
+    "safe",
+    "blk_kick",
+    "fum",
+    "pts_allow_28_34",
+    "pts_allow_35p",
+    "fum_rec_td",
+    "def_st_ff",
+    "pts_allow_7_13",
+    "st_ff"
+}
+
 # ✅ MUST be first Streamlit call
 # Removed duplicate st.set_page_config to fix Streamlit error
 
@@ -330,6 +368,8 @@ if username:
         # Sidebar: List custom scoring settings
         non_default_settings = []
         for k, v in scoring.items():
+            if k in OMIT_SCORING_KEYS:
+                continue  # Skip any omitted keys
             default_val = DEFAULT_SCORING.get(k)
             try:
                 if default_val is None or float(v) != float(default_val):
