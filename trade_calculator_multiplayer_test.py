@@ -326,7 +326,7 @@ if username:
             positions = ['QB', 'RB', 'WR', 'TE', 'PICK']
             display_map = {'QB': 'QB', 'RB': 'RB', 'WR': 'WR', 'TE': 'TE', 'PICK': 'Draft Picks'}
             position_columns = st.columns(len(positions))
-            selected_players = []
+            selected_names = []  # 👈 this is now used directly downstream
             
             for idx, pos in enumerate(positions):
                 with position_columns[idx]:
@@ -338,7 +338,7 @@ if username:
                         name = row['Player_Sleeper']
                         ktc = row['KTC_Value']
             
-                        # HTML label formatted to look like a 2-line label
+                        # Label styling
                         label_html = f"<strong>{name}</strong><br><small>(KTC: {ktc})</small>"
             
                         with st.container():
@@ -349,12 +349,7 @@ if username:
                                 st.markdown(label_html, unsafe_allow_html=True)
             
                             if checked:
-                                selected_players.append(name)
-                                st.markdown(
-                                    f"<div style='line-height:1.2; margin-top:-35px; margin-bottom:10px;'>"
-                                    f"<strong>{row['Player_Sleeper']}</strong><br><small>(KTC: {row['KTC_Value']})</small></div>",
-                                    unsafe_allow_html=True
-                                )
+                                selected_names.append(name)  # 👈 now tied to the actual trade logic
 
             if selected_names:
                 selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
