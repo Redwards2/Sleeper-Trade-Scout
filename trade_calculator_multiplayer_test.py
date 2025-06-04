@@ -399,28 +399,32 @@ if username:
         )
 
         # ==========================
-        # League Breakdown Tab Build
+        # League Breakdown Tab Build (OWNER'S TOTAL LEAGUE COUNT)
         # ==========================
-        # Build a mapping from owner display_name to number of 2025 leagues they're in
-        all_owners = {}
-        for lg in leagues:
-            lid = lg['league_id']
-            try:
-                league_users = requests.get(f"https://api.sleeper.app/v1/league/{lid}/users").json()
-                for u in league_users:
-                    all_owners[u['display_name']] = all_owners.get(u['display_name'], 0) + 1
-            except:
-                pass  # Ignore API errors, keep going
+        import time
         
-        # Get list of owners for THIS league
+        # Get user_id for each owner in this league, then count their 2025 leagues
         this_league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
         league_breakdown_rows = []
+        
         for u in this_league_users:
             owner = u['display_name']
+            their_user_id = u['user_id']
+            # For each owner, count their 2025 leagues (may want to try/except in case of private/banned/locked users)
+            try:
+                owner_leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/2025"
+                leagues_for_owner = requests.get(owner_leagues_url).json()
+                leagues_count = len(leagues_for_owner)
+                # Avoid hammering the Sleeper API with rapid requests!
+                time.sleep(0.15)
+            except Exception as ex:
+                leagues_count = "?"
+        
             league_breakdown_rows.append({
                 "Owner": owner,
-                "# of leagues": all_owners.get(owner, 1)
+                "# of leagues": leagues_count
             })
+        
         league_breakdown_df = pd.DataFrame(league_breakdown_rows).sort_values("# of leagues", ascending=False)
         
         # ===================
