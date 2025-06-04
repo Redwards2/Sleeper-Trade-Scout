@@ -400,6 +400,9 @@ if username:
         # Show league_desc in the sidebar under league selection
         st.sidebar.markdown(f"<div style='font-size:16px; font-weight:600; color:#4da6ff; text-align:center;'>{league_desc}</div>", unsafe_allow_html=True)
 
+        ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
+        df, player_pool = load_league_data(league_id, ktc_df)
+        
          # Sidebar: List custom scoring settings
         non_default_settings = []
         for k, v in scoring.items():
