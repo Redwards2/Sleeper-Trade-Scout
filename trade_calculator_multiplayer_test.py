@@ -448,27 +448,18 @@ if username:
                 position_columns = st.columns(len(positions))
                 selected_names = []
         
-                players_per_row = 2  # Try 2 or 3 for even more compactness
-
                 for idx, pos in enumerate(positions):
                     with position_columns[idx]:
                         st.markdown(f"**{display_map[pos]}**")
-                        pos_players = user_players[user_players["Position"] == pos].reset_index(drop=True)
-                
-                        # Iterate in chunks of players_per_row
-                        for i in range(0, len(pos_players), players_per_row):
-                            cols = st.columns(players_per_row)
-                            for j, col in enumerate(cols):
-                                if i + j < len(pos_players):
-                                    row = pos_players.iloc[i + j]
-                                    key = f"cb_{row['Sleeper_Player_ID']}"
-                                    name = row['Player_Sleeper']
-                                    ktc = row['KTC_Value']
-                                    label = f"{name} (KTC: {ktc})"
-                                    with col:
-                                        checked = st.checkbox(label, key=key)
-                                        if checked:
-                                            selected_names.append(name)
+                        pos_players = user_players[user_players["Position"] == pos]
+                        for _, row in pos_players.iterrows():
+                            key = f"cb_{row['Sleeper_Player_ID']}"
+                            name = row['Player_Sleeper']
+                            ktc = row['KTC_Value']
+                            label = f"{name} (KTC: {ktc})"
+                            checked = st.checkbox(label, key=key)
+                            if checked:
+                                selected_names.append(name)
         
                 if selected_names:
                     selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
