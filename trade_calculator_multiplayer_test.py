@@ -398,147 +398,142 @@ if username:
             unsafe_allow_html=True
         )
 
-        # Show league_desc in sidebar
-        st.sidebar.markdown(f"<div style='font-size:16px; font-weight:600; color:#4da6ff'>{league_desc}</div>", unsafe_allow_html=True)
-        
-        # Sidebar: List custom scoring settings
-        non_default_settings = []
-        for k, v in scoring.items():
-            if k in OMIT_SCORING_KEYS:
-                continue
-            # The new "skip zero" block goes here
+        # ==========================
+        # League Breakdown Tab Build
+        # ==========================
+        # Build a mapping from owner display_name to number of 2025 leagues they're in
+        all_owners = {}
+        for lg in leagues:
+            lid = lg['league_id']
             try:
-                if float(v) == 0.0:
-                    continue
-            except Exception:
-                if str(v) == "0" or str(v) == "0.0":
-                    continue
-            default_val = DEFAULT_SCORING.get(k)
-            try:
-                if default_val is None or float(v) != float(default_val):
-                    non_default_settings.append((k, v))
-            except Exception:
-                if default_val is None or v != default_val:
-                    non_default_settings.append((k, v))
+                league_users = requests.get(f"https://api.sleeper.app/v1/league/{lid}/users").json()
+                for u in league_users:
+                    all_owners[u['display_name']] = all_owners.get(u['display_name'], 0) + 1
+            except:
+                pass  # Ignore API errors, keep going
         
-        if non_default_settings:
-            st.sidebar.markdown("**Custom Scoring Settings:**")
-            for k, v in non_default_settings:
-                pretty_k = PRETTY_SCORING_LABELS.get(k, k.replace("_", " ").title())
-                st.sidebar.markdown(f"<span style='color: #39d353; font-weight: bold'>{pretty_k}: {v}</span>", unsafe_allow_html=True)
-
-        ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
-        df, player_pool = load_league_data(league_id, ktc_df)
-
-        if not df.empty:
-            top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
-
-            # Sort players by KTC descending
-            user_players = df[df["Team_Owner"].str.lower() == username_lower].sort_values("KTC_Value", ascending=False)
-            selected_names = []
-            
-            st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
-            
-            positions = ['QB', 'RB', 'WR', 'TE', 'PICK']
-            display_map = {'QB': 'QB', 'RB': 'RB', 'WR': 'WR', 'TE': 'TE', 'PICK': 'Draft Picks'}
-            position_columns = st.columns(len(positions))
-            selected_names = []  # 👈 this is now used directly downstream
-            
-            for idx, pos in enumerate(positions):
-                with position_columns[idx]:
-                    st.markdown(f"**{display_map[pos]}**")
-                    pos_players = user_players[user_players["Position"] == pos]
-            
-                    for _, row in pos_players.iterrows():
-                        key = f"cb_{row['Sleeper_Player_ID']}"
-                        name = row['Player_Sleeper']
-                        ktc = row['KTC_Value']
-            
-                        # Label styling
-                        label_html = f"<strong>{name}</strong><br><small>(KTC: {ktc})</small>"
-            
-                        with st.container():
-                            col_cb, col_lbl = st.columns([1, 4])
-                            with col_cb:
-                                checked = st.checkbox(" ", key=key)
-                            with col_lbl:
-                                st.markdown(label_html, unsafe_allow_html=True)
-            
-                            if checked:
-                                selected_names.append(name)  # 👈 now tied to the actual trade logic
-
-            if selected_names:
-                selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
-                    df, selected_names, top_qbs, qb_premium_setting
-                )
-                owner = selected_rows.iloc[0]["Team_Owner"]
-
-                st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
-                st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
-
-                try:
-                    with st.expander(f"📈 {len(selected_names)}-for-1 Trade Suggestions"):
-                        one_low = int(adjusted_total * (1 - tolerance / 100))
-                        one_high = int(adjusted_total * (1 + tolerance / 100))
-
-                        one_for_one = df[
-                           ((df["KTC_Value"] + df.apply(
-                                lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
-                            )) >= one_low) &
-                            ((df["KTC_Value"] + df.apply(
-                              lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
-                            )) <= one_high) &
-                            (df["Team_Owner"] != owner)
-                       ][["Player_Sleeper", "Position", "Team", "KTC_Value", "Team_Owner"]]
-
-                        if not one_for_one.empty:
-                            st.dataframe(one_for_one.sort_values("KTC_Value", ascending=False).reset_index(drop=True))
-                        else:
-                            st.write("No 1-for-1 trades found in that range.")
-
-                    with st.expander(f"👥 {len(selected_names)}-for-2 Trade Suggestions"):
-                        # START: Corrected 1-for-2 package bonus calculation
-                        your_side_total = total_ktc + package_bonus(selected_rows["KTC_Value"].tolist())
-                        two_low = int(your_side_total * (1 - tolerance / 100))
-                        two_high = int(your_side_total * (1 + tolerance / 100))
-                        # END
-
-
-                        results = []
-                        other_teams = df[df["Team_Owner"] != owner]["Team_Owner"].unique()
-
-                        for team_owner in other_teams:
-                            team_players = df[df["Team_Owner"] == team_owner]
-                            combos = combinations(team_players.iterrows(), 2)
-                            for (i1, p1), (i2, p2) in combos:
-                              # 🚫 Skip if either player alone has higher raw KTC than your selected package
-                              if p1["KTC_Value"] > total_ktc or p2["KTC_Value"] > total_ktc:
-                                  continue
-
-                              value = p1["KTC_Value"] + p2["KTC_Value"]
-                              if p1["Position"] == "QB" and p1["Player_Sleeper"] in top_qbs:
-                                  value += qb_premium_setting
-                              if p2["Position"] == "QB" and p2["Player_Sleeper"] in top_qbs:
-                                  value += qb_premium_setting
-                              # 🚫 No package bonus added to 2-for-1 side
-                              if two_low <= value <= two_high:
-                                  results.append({
-                                      "Team_Owner": team_owner,
-                                      "Player 1": f"{p1['Player_Sleeper']} (KTC: {p1['KTC_Value']})",
-                                      "Player 2": f"{p2['Player_Sleeper']} (KTC: {p2['KTC_Value']})",
-                                     "Total Value": value
-                                  })
-
-
-                        if results:
-                            st.dataframe(pd.DataFrame(results).sort_values("Total Value", ascending=False).reset_index(drop=True))
-                        else:
-                            st.write("No 2-for-1 trades found in that range.")
-                except Exception as trade_error:
-                    st.error(f"⚠️ Trade suggestion error: {trade_error}")
+        # Get list of owners for THIS league
+        this_league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
+        league_breakdown_rows = []
+        for u in this_league_users:
+            owner = u['display_name']
+            league_breakdown_rows.append({
+                "Owner": owner,
+                "# of leagues": all_owners.get(owner, 1)
+            })
+        league_breakdown_df = pd.DataFrame(league_breakdown_rows).sort_values("# of leagues", ascending=False)
+        
+        # ===================
+        # Tab Layout
+        # ===================
+        tabs = st.tabs(["Trade Tool", "League Breakdown"])
+        
+        with tabs[0]:  # Main trade tool as before!
+            if not df.empty:
+                top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
+        
+                # Sort players by KTC descending
+                user_players = df[df["Team_Owner"].str.lower() == username_lower].sort_values("KTC_Value", ascending=False)
+                selected_names = []
+        
+                st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
+                positions = ['QB', 'RB', 'WR', 'TE', 'PICK']
+                display_map = {'QB': 'QB', 'RB': 'RB', 'WR': 'WR', 'TE': 'TE', 'PICK': 'Draft Picks'}
+                position_columns = st.columns(len(positions))
+                selected_names = []
+        
+                for idx, pos in enumerate(positions):
+                    with position_columns[idx]:
+                        st.markdown(f"**{display_map[pos]}**")
+                        pos_players = user_players[user_players["Position"] == pos]
+        
+                        for _, row in pos_players.iterrows():
+                            key = f"cb_{row['Sleeper_Player_ID']}"
+                            name = row['Player_Sleeper']
+                            ktc = row['KTC_Value']
+        
+                            label_html = f"<strong>{name}</strong><br><small>(KTC: {ktc})</small>"
+                            with st.container():
+                                col_cb, col_lbl = st.columns([1, 4])
+                                with col_cb:
+                                    checked = st.checkbox(" ", key=key)
+                                with col_lbl:
+                                    st.markdown(label_html, unsafe_allow_html=True)
+        
+                                if checked:
+                                    selected_names.append(name)
+        
+                if selected_names:
+                    selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
+                        df, selected_names, top_qbs, qb_premium_setting
+                    )
+                    owner = selected_rows.iloc[0]["Team_Owner"]
+        
+                    st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
+                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
+                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
+                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
+                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
+        
+                    try:
+                        with st.expander(f"📈 {len(selected_names)}-for-1 Trade Suggestions"):
+                            one_low = int(adjusted_total * (1 - tolerance / 100))
+                            one_high = int(adjusted_total * (1 + tolerance / 100))
+        
+                            one_for_one = df[
+                               ((df["KTC_Value"] + df.apply(
+                                    lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
+                                )) >= one_low) &
+                                ((df["KTC_Value"] + df.apply(
+                                  lambda row: package_bonus([row["KTC_Value"]]) if len(selected_names) > 1 else 0, axis=1
+                                )) <= one_high) &
+                                (df["Team_Owner"] != owner)
+                           ][["Player_Sleeper", "Position", "Team", "KTC_Value", "Team_Owner"]]
+        
+                            if not one_for_one.empty:
+                                st.dataframe(one_for_one.sort_values("KTC_Value", ascending=False).reset_index(drop=True))
+                            else:
+                                st.write("No 1-for-1 trades found in that range.")
+        
+                        with st.expander(f"👥 {len(selected_names)}-for-2 Trade Suggestions"):
+                            your_side_total = total_ktc + package_bonus(selected_rows["KTC_Value"].tolist())
+                            two_low = int(your_side_total * (1 - tolerance / 100))
+                            two_high = int(your_side_total * (1 + tolerance / 100))
+        
+                            results = []
+                            other_teams = df[df["Team_Owner"] != owner]["Team_Owner"].unique()
+        
+                            for team_owner in other_teams:
+                                team_players = df[df["Team_Owner"] == team_owner]
+                                combos = combinations(team_players.iterrows(), 2)
+                                for (i1, p1), (i2, p2) in combos:
+                                  if p1["KTC_Value"] > total_ktc or p2["KTC_Value"] > total_ktc:
+                                      continue
+        
+                                  value = p1["KTC_Value"] + p2["KTC_Value"]
+                                  if p1["Position"] == "QB" and p1["Player_Sleeper"] in top_qbs:
+                                      value += qb_premium_setting
+                                  if p2["Position"] == "QB" and p2["Player_Sleeper"] in top_qbs:
+                                      value += qb_premium_setting
+                                  if two_low <= value <= two_high:
+                                      results.append({
+                                          "Team_Owner": team_owner,
+                                          "Player 1": f"{p1['Player_Sleeper']} (KTC: {p1['KTC_Value']})",
+                                          "Player 2": f"{p2['Player_Sleeper']} (KTC: {p2['KTC_Value']})",
+                                         "Total Value": value
+                                      })
+        
+                            if results:
+                                st.dataframe(pd.DataFrame(results).sort_values("Total Value", ascending=False).reset_index(drop=True))
+                            else:
+                                st.write("No 2-for-1 trades found in that range.")
+                    except Exception as trade_error:
+                        st.error(f"⚠️ Trade suggestion error: {trade_error}")
+        
+        with tabs[1]:
+            st.markdown("<h3 style='text-align:center;'>League Breakdown</h3>", unsafe_allow_html=True)
+            st.write(f"This table shows how many 2025 leagues each owner is in, based on your league list.")
+            st.dataframe(league_breakdown_df, use_container_width=True)
 
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
