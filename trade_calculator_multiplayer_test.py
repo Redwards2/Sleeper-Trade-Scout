@@ -448,26 +448,21 @@ if username:
                 position_columns = st.columns(len(positions))
                 selected_names = []
         
-                for idx, pos in enumerate(positions):
-                    with position_columns[idx]:
-                        st.markdown(f"**{display_map[pos]}**")
-                        pos_players = user_players[user_players["Position"] == pos]
-        
-                        for _, row in pos_players.iterrows():
-                            key = f"cb_{row['Sleeper_Player_ID']}"
-                            name = row['Player_Sleeper']
-                            ktc = row['KTC_Value']
-        
-                            label_html = f"<strong>{name}</strong><br><small>(KTC: {ktc})</small>"
-                            with st.container():
-                                col_cb, col_lbl = st.columns([1, 4])
-                                with col_cb:
-                                    checked = st.checkbox(" ", key=key)
-                                with col_lbl:
-                                    st.markdown(label_html, unsafe_allow_html=True)
-        
-                                if checked:
-                                    selected_names.append(name)
+                ffor _, row in pos_players.iterrows():
+                    key = f"cb_{row['Sleeper_Player_ID']}"
+                    name = row['Player_Sleeper']
+                    ktc = row['KTC_Value']
+                
+                    # Compact, single-line layout with name & KTC
+                    label_html = f"""
+                        <div style='display: flex; align-items: center; justify-content: space-between; font-size:15px; padding:2px 0 2px 0;'>
+                            <span style='font-weight:bold;'>{name}</span>
+                            <span style='color:#aaa; font-size:13px;'>(KTC: {ktc})</span>
+                        </div>
+                    """
+                    checked = st.checkbox(label_html, key=key, unsafe_allow_html=True)
+                    if checked:
+                        selected_names.append(name)
         
                 if selected_names:
                     selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
