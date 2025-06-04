@@ -490,12 +490,13 @@ if username:
                     owner = selected_rows.iloc[0]["Team_Owner"]
                 
                     # Side-by-side layout: left=image, right=package details
-                    img_col, val_col = st.columns([1, 2])
-                
+                    img_col, val_col = st.columns([1, 2], gap="large")
+
                     with img_col:
+                        # Outer container: fill available height, center content vertically
                         st.markdown(
                             """
-                            <div style='display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 350px;'>
+                            <div style='height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 320px;'>
                             """,
                             unsafe_allow_html=True,
                         )
