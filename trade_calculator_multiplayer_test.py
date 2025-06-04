@@ -449,17 +449,17 @@ if username:
                 selected_names = []
         
                 for idx, pos in enumerate(positions):
-                    with position_columns[idx]:
-                        st.markdown(f"**{display_map[pos]}**")
-                        pos_players = user_players[user_players["Position"] == pos]
-                        for _, row in pos_players.iterrows():
-                            key = f"cb_{row['Sleeper_Player_ID']}"
-                            name = row['Player_Sleeper']
-                            ktc = row['KTC_Value']
-                            label = f"{name} (KTC: {ktc})"
-                            checked = st.checkbox(label, key=key)
-                            if checked:
-                                selected_names.append(name)
+    with position_columns[idx]:
+        st.markdown(f"**{display_map[pos]}**")
+        pos_players = user_players[user_players["Position"] == pos]
+        for _, row in pos_players.iterrows():
+            key = f"cb_{row['Sleeper_Player_ID']}"
+            name = row['Player_Sleeper']
+            ktc = row['KTC_Value']
+            label = f"{name} (KTC: {ktc})"
+            checked = st.checkbox(label, key=key)
+            if checked:
+                selected_names.append(name)
         
                 if selected_names:
                     selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
