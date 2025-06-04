@@ -591,7 +591,8 @@ if username:
         
                 st.markdown("<h3 style='text-align:center;'>League Breakdown</h3>", unsafe_allow_html=True)
                 st.write("This table shows how many 2025 leagues each owner is in:")
-                st.dataframe(league_breakdown_df, use_container_width=True)
+                table_height = max(400, 40 * len(league_breakdown_df) + 60)
+                st.dataframe(league_breakdown_df, use_container_width=True, height=table_height)
 
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
