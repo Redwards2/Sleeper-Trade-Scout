@@ -432,7 +432,7 @@ if username:
         # ===================
         # Tab Layout
         # ===================
-        = st.(["Trade Tool", "League Breakdown"])
+        tabs = st.tabs(["Trade Tool", "League Breakdown"])
         
         with [0]:  # Main trade tool as before!
             if not df.empty:
