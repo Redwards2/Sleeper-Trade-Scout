@@ -443,13 +443,20 @@ if username:
                 selected_names = []
         
                 st.markdown("<h3 style='text-align:center;'>Select player(s) to trade away:</h3>", unsafe_allow_html=True)
-                positions = ['QB', 'RB', 'WR', 'TE', 'PICK']
-                display_map = {'QB': 'QB', 'RB': 'RB', 'WR': 'WR', 'TE': 'TE', 'PICK': 'Draft Picks'}
-                position_columns = st.columns(len(positions))
+                positions = ['QB', 'RB', 'WR', 'TE',]
+                display_map = {'QB': 'QB', 'RB': 'RB', 'WR': 'WR', 'TE': 'TE'}
                 selected_names = []
         
-                for idx, pos in enumerate(positions):
-                    with position_columns[idx]:
+               # Define which positions go in each column
+                col1_positions = ['QB', 'RB']
+                col2_positions = ['WR', 'TE']
+                
+                # Create two columns for selection
+                col1, col2 = st.columns(2)
+                
+                # First column: QB and RB
+                with col1:
+                    for pos in col1_positions:
                         st.markdown(f"**{display_map[pos]}**")
                         pos_players = user_players[user_players["Position"] == pos]
                         for _, row in pos_players.iterrows():
@@ -460,7 +467,21 @@ if username:
                             checked = st.checkbox(label, key=key)
                             if checked:
                                 selected_names.append(name)
-        
+                
+                # Second column: WR and TE
+                with col2:
+                    for pos in col2_positions:
+                        st.markdown(f"**{display_map[pos]}**")
+                        pos_players = user_players[user_players["Position"] == pos]
+                        for _, row in pos_players.iterrows():
+                            key = f"cb_{row['Sleeper_Player_ID']}"
+                            name = row['Player_Sleeper']
+                            ktc = row['KTC_Value']
+                            label = f"{name} (KTC: {ktc})"
+                            checked = st.checkbox(label, key=key)
+                            if checked:
+                                selected_names.append(name)
+
                 if selected_names:
                     selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total = calculate_trade_value(
                         df, selected_names, top_qbs, qb_premium_setting
