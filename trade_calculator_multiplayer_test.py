@@ -434,7 +434,7 @@ if username:
         # ===================
         tabs = st.tabs(["Trade Tool", "League Breakdown"])
         
-        with [0]:  # Main trade tool as before!
+        with tabs[0]:  # Main trade tool as before!
             if not df.empty:
                 top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
         
