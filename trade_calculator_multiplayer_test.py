@@ -394,9 +394,11 @@ if username:
         # Build and show description
         league_desc = f"{num_teams} Team {league_type} {qb_format} {ppr_type} {tep_str} {format_type} Start {start_x}"
         st.markdown(
-            f"<div style='font-size:20px; font-weight:600; color:#4da6ff; text-align:center;'>{league_desc}</div>", 
+            f"<div style='font-size:22px; font-weight:600; color:#4da6ff; text-align:center;'>{league_desc}</div>", 
             unsafe_allow_html=True
         )
+        # Show league_desc in the sidebar under league selection
+        st.sidebar.markdown(f"<div style='font-size:16px; font-weight:600; color:#4da6ff; text-align:center;'>{league_desc}</div>", unsafe_allow_html=True)
 
          # Sidebar: List custom scoring settings
         non_default_settings = []
