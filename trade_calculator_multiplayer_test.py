@@ -54,7 +54,12 @@ OMIT_SCORING_KEYS = {
     "fum_rec_td",
     "def_st_ff",
     "pts_allow_7_13",
-    "st_ff"
+    "st_ff",
+    "rec_yd",
+    "rush_yd",
+    "kr_yd",
+    "pr_yd",
+    "pass_yd"
 }
 
 PRETTY_SCORING_LABELS = {
