@@ -432,11 +432,12 @@ if username:
         # ==========================
         # League Breakdown Tab Build (OWNER'S TOTAL LEAGUE COUNT)
         # ==========================
+            with st.spinner("Calculating League Statistics..."):
         import time
 
         this_league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
         league_breakdown_rows = []
-        
+
         for u in this_league_users:
             owner = u['display_name']
             their_user_id = u['user_id']
@@ -444,8 +445,8 @@ if username:
             redraft_count = 0
             total_count = 0
             championships = 0
-        
-            # 1. 2025 Leagues (Dynasty/Redraft/Total)
+
+            # Dynasty/Redraft/Total for 2025
             try:
                 owner_leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/2025"
                 leagues_for_owner = requests.get(owner_leagues_url).json()
@@ -456,38 +457,42 @@ if username:
                     else:
                         redraft_count += 1
                 total_count = len(leagues_for_owner)
-                time.sleep(0.12)
-            except Exception as ex:
+                time.sleep(0.10)
+            except Exception:
                 dynasty_count = "?"
                 redraft_count = "?"
                 total_count = "?"
-        
-            # 2. League Championships over last 5 years
-            seasons = [2025, 2024, 2023, 2022, 2021]
-            for season in seasons:
+
+            # Championships – recent 3 years for speed
+            for season in [2025, 2024, 2023]:
                 try:
-                    owner_leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/{season}"
-                    leagues_for_owner = requests.get(owner_leagues_url).json()
-                    for lg in leagues_for_owner:
-                        league_id_champ = lg['league_id']
+                    leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/{season}"
+                    leagues = requests.get(leagues_url).json()
+                    for league in leagues:
+                        league_id_champ = league['league_id']
                         rosters_url = f"https://api.sleeper.app/v1/league/{league_id_champ}/rosters"
                         rosters = requests.get(rosters_url).json()
                         for roster in rosters:
+                            # Both strings, should match exactly
                             if roster.get("owner_id") == their_user_id and roster.get("settings", {}).get("final_standing") == 1:
                                 championships += 1
-                    time.sleep(0.08)
-                except Exception as ex:
+                    time.sleep(0.05)
+                except Exception:
                     pass
-        
+
             league_breakdown_rows.append({
                 "Owner": owner,
                 "Dynasty Leagues": dynasty_count,
                 "Redraft Leagues": redraft_count,
                 "Total": total_count,
-                "Championships (Last 5)": championships
+                "Championships (23–25)": championships
             })
-        
+
         league_breakdown_df = pd.DataFrame(league_breakdown_rows).sort_values("Total", ascending=False)
+
+        st.markdown("<h3 style='text-align:center;'>League Breakdown</h3>", unsafe_allow_html=True)
+        st.write("This table shows how many 2025 leagues and championships each owner has:")
+        st.dataframe(league_breakdown_df, use_container_width=True)
         
         # ===================
         # Tab Layout
