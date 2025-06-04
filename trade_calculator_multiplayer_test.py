@@ -488,12 +488,23 @@ if username:
                         df, selected_names, top_qbs, qb_premium_setting
                     )
                     owner = selected_rows.iloc[0]["Team_Owner"]
-        
-                    st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
-                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
-                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
-                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
-                    st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
+                
+                    # Side-by-side layout: left=image, right=package details
+                    img_col, val_col = st.columns([1, 2])
+                
+                    with img_col:
+                        # Show the first selected player's image and name
+                        selected_id = df[df["Player_Sleeper"] == selected_names[0]].iloc[0]["Sleeper_Player_ID"]
+                        headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
+                        st.image(headshot_url, width=120)
+                        st.caption(selected_names[0])
+                
+                    with val_col:
+                        st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Total Raw KTC Value:</strong> {total_ktc}</li>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Package Bonus:</strong> +{total_bonus}</li>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>QB Premium Total:</strong> +{total_qb_premium}</li>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Adjusted Trade Value:</strong> {adjusted_total}</li></ul>", unsafe_allow_html=True)
         
                     try:
                         with st.expander(f"📈 {len(selected_names)}-for-1 Trade Suggestions"):
@@ -719,16 +730,6 @@ def filter_trades_for_player(trades, player_name, player_pool):
 
 # START: Side-by-side player images + trade history viewer
 if "selected_names" in locals() and selected_names:
-
-    # Images
-    num_players = len(selected_names)
-    cols = st.columns(num_players)
-    for i, name in enumerate(selected_names):
-        selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
-        headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
-        with cols[i]:
-            st.image(headshot_url, width=120)
-            st.caption(name)
 
     # Trade History Viewer
     if st.button("Show Trade History"):
