@@ -549,6 +549,8 @@ if username:
                     dynasty_count = 0
                     redraft_count = 0
                     total_count = 0
+                    lineup_count = 0
+                    bestball_count = 0
         
                     try:
                         owner_leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/2025"
@@ -559,17 +561,28 @@ if username:
                                 dynasty_count += 1
                             else:
                                 redraft_count += 1
+                                
+                               # Best Ball or Lineup check
+                            if lg.get("settings", {}).get("best_ball", 0) == 1:
+                                bestball_count += 1
+                            else:
+                                lineup_count += 1
+
                         total_count = len(leagues_for_owner)
                         time.sleep(0.10)
                     except Exception:
                         dynasty_count = -1
                         redraft_count = -1
                         total_count = -1
+                        lineup_count = -1
+                        bestball_count = -1
         
                     league_breakdown_rows.append({
                         "Owner": owner,
                         "Dynasty Leagues": dynasty_count,
                         "Redraft Leagues": redraft_count,
+                        "Lineup Leagues": lineup_count,
+                        "Best Ball Leagues": bestball_count,
                         "Total": total_count,
                     })
         
