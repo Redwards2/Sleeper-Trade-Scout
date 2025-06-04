@@ -398,6 +398,32 @@ if username:
             unsafe_allow_html=True
         )
 
+         # Sidebar: List custom scoring settings
+        non_default_settings = []
+        for k, v in scoring.items():
+            if k in OMIT_SCORING_KEYS:
+                continue
+            # The new "skip zero" block goes here
+            try:
+                if float(v) == 0.0:
+                    continue
+            except Exception:
+                if str(v) == "0" or str(v) == "0.0":
+                    continue
+            default_val = DEFAULT_SCORING.get(k)
+            try:
+                if default_val is None or float(v) != float(default_val):
+                    non_default_settings.append((k, v))
+            except Exception:
+                if default_val is None or v != default_val:
+                    non_default_settings.append((k, v))
+        
+        if non_default_settings:
+            st.sidebar.markdown("**Custom Scoring Settings:**")
+            for k, v in non_default_settings:
+                pretty_k = PRETTY_SCORING_LABELS.get(k, k.replace("_", " ").title())
+                st.sidebar.markdown(f"<span style='color: #39d353; font-weight: bold'>{pretty_k}: {v}</span>", unsafe_allow_html=True)
+                
         # ==========================
         # League Breakdown Tab Build (OWNER'S TOTAL LEAGUE COUNT)
         # ==========================
