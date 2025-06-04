@@ -20,6 +20,8 @@ DEFAULT_SCORING = {
 OMIT_SCORING_KEYS = {
     "sack",
     "fgm_40_49",
+    "fgm_50_59",
+    "fgm_60p",
     "pts_allow_0",
     "pass_2pt",
     "st_td",
@@ -403,7 +405,14 @@ if username:
         non_default_settings = []
         for k, v in scoring.items():
             if k in OMIT_SCORING_KEYS:
-                continue  # Skip any omitted keys
+                continue
+            # The new "skip zero" block goes here
+            try:
+                if float(v) == 0.0:
+                    continue
+            except Exception:
+                if str(v) == "0" or str(v) == "0.0":
+                    continue
             default_val = DEFAULT_SCORING.get(k)
             try:
                 if default_val is None or float(v) != float(default_val):
