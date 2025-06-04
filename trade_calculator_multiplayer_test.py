@@ -402,30 +402,41 @@ if username:
         # League Breakdown Tab Build (OWNER'S TOTAL LEAGUE COUNT)
         # ==========================
         import time
-        
-        # Get user_id for each owner in this league, then count their 2025 leagues
+
         this_league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
         league_breakdown_rows = []
         
         for u in this_league_users:
             owner = u['display_name']
             their_user_id = u['user_id']
-            # For each owner, count their 2025 leagues (may want to try/except in case of private/banned/locked users)
+            dynasty_count = 0
+            redraft_count = 0
+            total_count = 0
             try:
                 owner_leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/2025"
                 leagues_for_owner = requests.get(owner_leagues_url).json()
-                leagues_count = len(leagues_for_owner)
-                # Avoid hammering the Sleeper API with rapid requests!
-                time.sleep(0.15)
+                for lg in leagues_for_owner:
+                    # Prefer explicit type if available
+                    lg_type = str(lg.get('settings', {}).get('type', '')).lower()
+                    if lg_type == "dynasty" or lg_type == "2" or "dynasty" in lg.get('name', '').lower():
+                        dynasty_count += 1
+                    else:
+                        redraft_count += 1
+                total_count = len(leagues_for_owner)
+                time.sleep(0.15)  # Sleep to avoid rate limiting
             except Exception as ex:
-                leagues_count = "?"
+                dynasty_count = "?"
+                redraft_count = "?"
+                total_count = "?"
         
             league_breakdown_rows.append({
                 "Owner": owner,
-                "# of leagues": leagues_count
+                "Dynasty Leagues": dynasty_count,
+                "Redraft Leagues": redraft_count,
+                "Total": total_count,
             })
         
-        league_breakdown_df = pd.DataFrame(league_breakdown_rows).sort_values("# of leagues", ascending=False)
+        league_breakdown_df = pd.DataFrame(league_breakdown_rows).sort_values("Total", ascending=False)
         
         # ===================
         # Tab Layout
