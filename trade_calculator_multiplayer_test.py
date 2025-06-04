@@ -493,11 +493,25 @@ if username:
                     img_col, val_col = st.columns([1, 2])
                 
                     with img_col:
-                        # Show the first selected player's image and name
-                        selected_id = df[df["Player_Sleeper"] == selected_names[0]].iloc[0]["Sleeper_Player_ID"]
-                        headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
-                        st.image(headshot_url, width=120)
-                        st.caption(selected_names[0])
+                        st.markdown(
+                            """
+                            <div style='display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 350px;'>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        for name in selected_names:
+                            selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
+                            headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
+                            st.markdown(
+                                f"""
+                                <div style='display: flex; flex-direction: column; align-items: center; margin-bottom: 16px;'>
+                                    <img src="{headshot_url}" width="120" style="display:block; margin: 0 auto; border-radius:12px;">
+                                    <div style='text-align: center; font-size: 15px; color: #fff; margin-top: 8px;'>{name}</div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                        st.markdown("</div>", unsafe_allow_html=True)
                 
                     with val_col:
                         st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
