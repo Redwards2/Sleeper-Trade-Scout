@@ -549,7 +549,6 @@ if username:
                     dynasty_count = 0
                     redraft_count = 0
                     total_count = 0
-                    championships = 0
         
                     # Dynasty/Redraft/Total for 2025
                     try:
@@ -568,29 +567,11 @@ if username:
                         redraft_count = "?"
                         total_count = "?"
         
-                    # Championships – recent 3 years for speed
-                    for season in [2025, 2024, 2023]:
-                        try:
-                            leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/{season}"
-                            leagues = requests.get(leagues_url).json()
-                            for league in leagues:
-                                league_id_champ = league['league_id']
-                                rosters_url = f"https://api.sleeper.app/v1/league/{league_id_champ}/rosters"
-                                rosters = requests.get(rosters_url).json()
-                                for roster in rosters:
-                                    # Both strings, should match exactly
-                                    if roster.get("owner_id") == their_user_id and roster.get("settings", {}).get("final_standing") == 1:
-                                        championships += 1
-                            time.sleep(0.05)
-                        except Exception:
-                            pass
-        
                     league_breakdown_rows.append({
                         "Owner": owner,
                         "Dynasty Leagues": dynasty_count,
                         "Redraft Leagues": redraft_count,
                         "Total": total_count,
-                        "Championships (23–25)": championships
                     })
         
                 league_breakdown_df = pd.DataFrame(league_breakdown_rows).sort_values("Total", ascending=False)
