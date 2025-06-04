@@ -311,7 +311,7 @@ with st.sidebar:
     st.subheader("Trade Settings")
     tolerance = st.slider("Match Tolerance (%)", 1, 15, 5)
     qb_premium_setting = st.slider("QB Premium Bonus", 0, 1500, 750, step=50,
-                                   help="Extra value added to QBs for trade calculations.")
+                                   help="How much does your league value the QB position? Set to 1500 if trading with McNutted")
 
 league_id = None
 league_options = {}
