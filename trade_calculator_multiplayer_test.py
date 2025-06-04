@@ -493,13 +493,15 @@ if username:
                     img_col, val_col = st.columns([1, 2], gap="large")
 
                     with img_col:
-                        # Outer container: fill available height, center content vertically
-                        st.markdown(
-                            """
-                            <div style='height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 320px;'>
-                            """,
-                            unsafe_allow_html=True,
-                        )
+                        # Calculate the vertical space to add above the images (adjust as needed)
+                        n_images = len(selected_names)
+                        image_block_height = n_images * 150  # estimate: image+name ~150px per player
+                        value_block_height = 340  # adjust to match your value column (trial/error)
+                        top_padding = max(0, (value_block_height - image_block_height) // 2)
+                    
+                        # Add dynamic vertical spacer
+                        st.markdown(f"<div style='height: {top_padding}px;'></div>", unsafe_allow_html=True)
+                    
                         for name in selected_names:
                             selected_id = df[df["Player_Sleeper"] == name].iloc[0]["Sleeper_Player_ID"]
                             headshot_url = f"https://sleepercdn.com/content/nfl/players/{selected_id}.jpg"
