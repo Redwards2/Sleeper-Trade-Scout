@@ -457,15 +457,8 @@ if username:
                             key = f"cb_{row['Sleeper_Player_ID']}"
                             name = row['Player_Sleeper']
                             ktc = row['KTC_Value']
-                
-                            # Compact, single-line layout with name & KTC
-                            label_html = f"""
-                                <div style='display: flex; align-items: center; justify-content: space-between; font-size:15px; padding:2px 0 2px 0;'>
-                                    <span style='font-weight:bold;'>{name}</span>
-                                    <span style='color:#aaa; font-size:13px;'>(KTC: {ktc})</span>
-                                </div>
-                            """
-                            checked = st.checkbox(label_html, key=key, unsafe_allow_html=True)
+                            label = f"{name}  (KTC: {ktc})"
+                            checked = st.checkbox(label, key=key)
                             if checked:
                                 selected_names.append(name)
         
