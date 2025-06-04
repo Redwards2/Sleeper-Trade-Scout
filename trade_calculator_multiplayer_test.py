@@ -448,7 +448,7 @@ if username:
                 position_columns = st.columns(len(positions))
                 selected_names = []
         
-                ffor _, row in pos_players.iterrows():
+                for _, row in pos_players.iterrows():
                     key = f"cb_{row['Sleeper_Player_ID']}"
                     name = row['Player_Sleeper']
                     ktc = row['KTC_Value']
