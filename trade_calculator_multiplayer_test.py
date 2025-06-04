@@ -550,7 +550,6 @@ if username:
                     redraft_count = 0
                     total_count = 0
         
-                    # Dynasty/Redraft/Total for 2025
                     try:
                         owner_leagues_url = f"https://api.sleeper.app/v1/user/{their_user_id}/leagues/nfl/2025"
                         leagues_for_owner = requests.get(owner_leagues_url).json()
@@ -563,9 +562,9 @@ if username:
                         total_count = len(leagues_for_owner)
                         time.sleep(0.10)
                     except Exception:
-                        dynasty_count = "?"
-                        redraft_count = "?"
-                        total_count = "?"
+                        dynasty_count = -1
+                        redraft_count = -1
+                        total_count = -1
         
                     league_breakdown_rows.append({
                         "Owner": owner,
@@ -575,9 +574,10 @@ if username:
                     })
         
                 league_breakdown_df = pd.DataFrame(league_breakdown_rows).sort_values("Total", ascending=False)
+                league_breakdown_df.replace(-1, "", inplace=True)
         
                 st.markdown("<h3 style='text-align:center;'>League Breakdown</h3>", unsafe_allow_html=True)
-                st.write("This table shows how many 2025 leagues and championships each owner has:")
+                st.write("This table shows how many 2025 leagues each owner is in:")
                 st.dataframe(league_breakdown_df, use_container_width=True)
 
     except Exception as e:
