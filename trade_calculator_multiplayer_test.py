@@ -437,7 +437,7 @@ if username:
         # ===================
         # Tab Layout
         # ===================
-        tabs = st.tabs(["Trade Tool", "League Breakdown"])
+        tabs = st.tabs(["Trade Tool", "League Breakdown", "Player Portfolio"])
         
         with tabs[0]:  # Main trade tool as before!
             if not df.empty:
@@ -641,6 +641,49 @@ if username:
                 st.write("This table shows how many 2025 leagues each owner is in:")
                 table_height = max(400, 40 * len(league_breakdown_df) + 60)
                 st.dataframe(league_breakdown_df, use_container_width=True, height=table_height)
+
+        with tabs[2]:
+            with st.spinner("Calculating Player Ownership..."):
+                try:
+                    # Fetch all of your leagues (2025)
+                    owner_leagues_url = f"https://api.sleeper.app/v1/user/{user_id}/leagues/nfl/2025"
+                    leagues_for_owner = requests.get(owner_leagues_url).json()
+                    total_leagues = len(leagues_for_owner)
+                    player_counts = {}
+        
+                    # For each league, find your roster and add up all player IDs
+                    for league in leagues_for_owner:
+                        league_id_this = league['league_id']
+                        rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id_this}/rosters").json()
+                        # Find your roster in this league
+                        my_roster = next((r for r in rosters if r.get("owner_id") == user_id), None)
+                        if not my_roster:
+                            continue
+                        for pid in my_roster.get("players", []):
+                            player_counts[pid] = player_counts.get(pid, 0) + 1
+        
+                    # Build ownership DataFrame
+                    rows = []
+                    for pid, count in player_counts.items():
+                        # Try to get a nice player name from player_pool (if available), otherwise show pid
+                        player_name = player_pool.get(pid, {}).get("full_name", pid)
+                        ownership_pct = (count / total_leagues) * 100 if total_leagues else 0
+                        rows.append({
+                            "Player": player_name,
+                            "Leagues Owned": count,
+                            "Total Leagues": total_leagues,
+                            "Ownership %": f"{ownership_pct:.0f}%"
+                        })
+        
+                    # Sort by number of leagues owned (descending)
+                    portfolio_df = pd.DataFrame(rows).sort_values("Leagues Owned", ascending=False).reset_index(drop=True)
+        
+                    st.markdown("<h3 style='text-align:center;'>Player Portfolio</h3>", unsafe_allow_html=True)
+                    st.write("This table shows your 2025 ownership % for each player across all your leagues:")
+                    table_height = max(400, 40 * len(portfolio_df) + 60)
+                    st.dataframe(portfolio_df, use_container_width=True, height=table_height)
+                except Exception as e:
+                    st.error(f"Could not calculate player portfolio: {e}")
 
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
