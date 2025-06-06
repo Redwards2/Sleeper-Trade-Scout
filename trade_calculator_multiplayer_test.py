@@ -659,7 +659,8 @@ if username:
                         my_roster = next((r for r in rosters if r.get("owner_id") == user_id), None)
                         if not my_roster:
                             continue
-                        for pid in my_roster.get("players", []):
+                        players_on_roster = my_roster.get("players") or []
+                        for pid in players_on_roster:
                             player_counts[pid] = player_counts.get(pid, 0) + 1
         
                     # Build ownership DataFrame
