@@ -711,7 +711,10 @@ if username:
                             "Leagues Owned": count,
                             "Ownership %": f"{ownership_pct:.0f}%"
                         })
-            
+                    
+                    # FIX: Build the DataFrame here BEFORE you use it!
+                    portfolio_df = pd.DataFrame(rows).sort_values("Leagues Owned", ascending=False).reset_index(drop=True)
+                    
                     # Show league total description
                     if filter_option == "All":
                         league_type_str = "all Leagues"
