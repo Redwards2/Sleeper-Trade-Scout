@@ -644,6 +644,17 @@ if username:
 
         with tabs[2]:
             with st.spinner("Calculating Player Ownership..."):
+                # Get all owners in the current league
+                league_users_url = f"https://api.sleeper.app/v1/league/{league_id}/users"
+                league_users = requests.get(league_users_url).json()
+                owner_display_map = {u['display_name']: u['user_id'] for u in league_users}
+                owner_names = list(owner_display_map.keys())
+            
+                # Dropdown to select which owner's portfolio to view
+                selected_owner = st.selectbox("Select Owner for Player Portfolio", owner_names)
+                selected_owner_id = owner_display_map[selected_owner]
+            
+                # Optional: add league format filter
                 filter_option = st.selectbox(
                     "Filter Leagues By Type/Format:",
                     [
@@ -655,12 +666,12 @@ if username:
                     ],
                     index=0
                 )
-        
+            
                 def league_matches_filter(league, option):
                     lg_type = str(league.get('settings', {}).get('type', '')).lower()
                     is_dynasty = (lg_type == "dynasty" or lg_type == "2" or "dynasty" in league.get('name', '').lower())
                     is_bestball = league.get("settings", {}).get("best_ball", 0) == 1
-        
+            
                     if option == "All":
                         return True
                     if option == "Dynasty Lineup":
@@ -672,25 +683,25 @@ if username:
                     if option == "Redraft Best Ball":
                         return (not is_dynasty) and is_bestball
                     return True
-        
+            
                 try:
-                    # Fetch all of your leagues (2025)
-                    owner_leagues_url = f"https://api.sleeper.app/v1/user/{user_id}/leagues/nfl/2025"
+                    # Fetch all of the selected owner's leagues (2025)
+                    owner_leagues_url = f"https://api.sleeper.app/v1/user/{selected_owner_id}/leagues/nfl/2025"
                     leagues_for_owner = requests.get(owner_leagues_url).json()
                     filtered_leagues = [league for league in leagues_for_owner if league_matches_filter(league, filter_option)]
                     total_leagues = len(filtered_leagues)
                     player_counts = {}
-        
+            
                     for league in filtered_leagues:
                         league_id_this = league['league_id']
                         rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id_this}/rosters").json()
-                        my_roster = next((r for r in rosters if r.get("owner_id") == user_id), None)
+                        my_roster = next((r for r in rosters if r.get("owner_id") == selected_owner_id), None)
                         if not my_roster:
                             continue
                         players_on_roster = my_roster.get("players") or []
                         for pid in players_on_roster:
                             player_counts[pid] = player_counts.get(pid, 0) + 1
-        
+            
                     rows = []
                     for pid, count in player_counts.items():
                         player_name = player_pool.get(pid, {}).get("full_name", pid)
@@ -701,11 +712,11 @@ if username:
                             "Total Leagues": total_leagues,
                             "Ownership %": f"{ownership_pct:.0f}%"
                         })
-        
+            
                     portfolio_df = pd.DataFrame(rows).sort_values("Leagues Owned", ascending=False).reset_index(drop=True)
-        
-                    st.markdown("<h3 style='text-align:center;'>Player Portfolio</h3>", unsafe_allow_html=True)
-                    st.write("This table shows your 2025 ownership % for each player across all your leagues (filtered):")
+            
+                    st.markdown(f"<h3 style='text-align:center;'>Player Portfolio for {selected_owner}</h3>", unsafe_allow_html=True)
+                    st.write("This table shows the 2025 ownership % for each player across all their leagues (filtered):")
                     table_height = max(400, 40 * len(portfolio_df) + 60)
                     st.dataframe(portfolio_df, use_container_width=True, height=table_height)
                 except Exception as e:
