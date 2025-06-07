@@ -709,12 +709,21 @@ if username:
                         rows.append({
                             "Player": player_name,
                             "Leagues Owned": count,
-                            "Total Leagues": total_leagues,
                             "Ownership %": f"{ownership_pct:.0f}%"
                         })
             
-                    portfolio_df = pd.DataFrame(rows).sort_values("Leagues Owned", ascending=False).reset_index(drop=True)
-            
+                    # Show league total description
+                    if filter_option == "All":
+                        league_type_str = "all Leagues"
+                    else:
+                        league_type_str = f"{filter_option} leagues"
+                    st.markdown(
+                        f"<div style='margin-bottom:12px; font-size:17px; text-align:left; color:#4da6ff;'>"
+                        f"Total number of {league_type_str}: <b>{total_leagues}</b>"
+                        "</div>",
+                        unsafe_allow_html=True
+                    )
+                    
                     st.markdown(f"<h3 style='text-align:center;'>Player Portfolio for {selected_owner}</h3>", unsafe_allow_html=True)
                     st.write("This table shows the 2025 ownership % for each player across all their leagues (filtered):")
                     table_height = max(400, 40 * len(portfolio_df) + 60)
