@@ -407,9 +407,6 @@ if username:
 
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
-        with st.expander("🛠 DEBUG: Raw Roster Data", expanded=False):
-            st.write("Here is the full raw DataFrame returned from load_league_data():")
-            st.dataframe(df)
         
          # Sidebar: List custom scoring settings
         non_default_settings = []
