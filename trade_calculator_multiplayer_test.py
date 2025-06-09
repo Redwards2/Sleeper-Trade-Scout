@@ -260,12 +260,16 @@ def get_all_trades_from_league(league_id):
                 for t in transactions:
                     if t.get("type") == "trade":
                         all_trades.append(t)
+                        
                         adds = t.get("adds") or {}
                         for pid, roster_id in adds.items():
                             if pid.startswith("2025_pick_"):
                                 owner_id = roster_map.get(str(roster_id))
                                 if owner_id and owner_id in user_map:
                                     pick_owners[pid] = user_map[owner_id]
+                                elif pid.split("_")[-1] in user_map:
+                                    generic_uid = pid.split("_")[-1]
+                                    pick_owners[pid] = user_map[generic_uid]
 
         current_league_id = league_info.get("previous_league_id")
 
