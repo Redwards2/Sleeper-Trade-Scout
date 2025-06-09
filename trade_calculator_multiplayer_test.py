@@ -218,6 +218,53 @@ def calculate_trade_value(players_df, selected_names, top_qbs, qb_premium_settin
     adjusted_total = total_ktc + total_qb_premium  # for 1-for-1 use only
     return selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total
 
+def get_all_trades_from_league(league_id):
+    """
+    Recursively pulls all trades from the given league and its previous seasons.
+    Also builds a mapping of traded rookie pick IDs to their most recent owner.
+    Returns:
+        - trades: list of trade transactions
+        - pick_owners: dict of {pick_id: owner_name}
+    """
+    all_trades = []
+    current_league_id = league_id
+    visited = set()
+    pick_owners = {}
+
+    # Lookup for roster_id → display name
+    league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
+    user_map = {user["user_id"]: user["display_name"] for user in league_users}
+    
+    # Roster ID → user_id map (we need this to reverse lookups)
+    roster_map = {}
+    rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/rosters").json()
+    for r in rosters:
+        roster_map[str(r["roster_id"])] = r["owner_id"]
+
+    while current_league_id and current_league_id not in visited:
+        visited.add(current_league_id)
+        league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}").json()
+        season = league_info.get("season", "?")
+
+        for week in range(1, 19):
+            url = f"https://api.sleeper.app/v1/league/{current_league_id}/transactions/{week}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                transactions = response.json()
+                for t in transactions:
+                    if t.get("type") == "trade":
+                        all_trades.append(t)
+                        adds = t.get("adds") or {}
+                        for pid, roster_id in adds.items():
+                            if pid.startswith("2025_pick_"):
+                                owner_id = roster_map.get(str(roster_id))
+                                if owner_id and owner_id in user_map:
+                                    pick_owners[pid] = user_map[owner_id]
+
+        current_league_id = league_info.get("previous_league_id")
+
+    return all_trades, pick_owners
+
 # --------------------
 # Sleeper League Loader with KTC Matching
 # --------------------
@@ -797,56 +844,6 @@ if 'league_id' in locals():
                 }
     except:
         pass
-
-# --------------------
-# Trade History Helpers
-# --------------------
-def get_all_trades_from_league(league_id):
-    """
-    Recursively pulls all trades from the given league and its previous seasons.
-    Also builds a mapping of traded rookie pick IDs to their most recent owner.
-    Returns:
-        - trades: list of trade transactions
-        - pick_owners: dict of {pick_id: owner_name}
-    """
-    all_trades = []
-    current_league_id = league_id
-    visited = set()
-    pick_owners = {}
-
-    # Lookup for roster_id → display name
-    league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
-    user_map = {user["user_id"]: user["display_name"] for user in league_users}
-    
-    # Roster ID → user_id map (we need this to reverse lookups)
-    roster_map = {}
-    rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/rosters").json()
-    for r in rosters:
-        roster_map[str(r["roster_id"])] = r["owner_id"]
-
-    while current_league_id and current_league_id not in visited:
-        visited.add(current_league_id)
-        league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}").json()
-        season = league_info.get("season", "?")
-
-        for week in range(1, 19):
-            url = f"https://api.sleeper.app/v1/league/{current_league_id}/transactions/{week}"
-            response = requests.get(url)
-            if response.status_code == 200:
-                transactions = response.json()
-                for t in transactions:
-                    if t.get("type") == "trade":
-                        all_trades.append(t)
-                        adds = t.get("adds") or {}
-                        for pid, roster_id in adds.items():
-                            if pid.startswith("2025_pick_"):
-                                owner_id = roster_map.get(str(roster_id))
-                                if owner_id and owner_id in user_map:
-                                    pick_owners[pid] = user_map[owner_id]
-
-        current_league_id = league_info.get("previous_league_id")
-
-    return all_trades, pick_owners
 
 # --------------------
 # Pick formatter for rough rookie picks
