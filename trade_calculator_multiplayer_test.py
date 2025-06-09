@@ -296,7 +296,12 @@ def load_league_data(league_id, ktc_df):
         pick_num = idx + 1
         pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
         pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
-        owner_name = user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}")
+        
+        # Check for traded ownership override
+        owner_name = traded_pick_owners.get(pick_id)
+        if not owner_name:
+            owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+            
         ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
         ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
         
@@ -315,7 +320,12 @@ def load_league_data(league_id, ktc_df):
         pick_num = idx + 1
         pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
         pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
-        owner_name = user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}")
+        
+        # Check for traded ownership override
+        owner_name = traded_pick_owners.get(pick_id)
+        if not owner_name:
+            owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+            
         ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
         ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
         
@@ -793,51 +803,50 @@ if 'league_id' in locals():
 def get_all_trades_from_league(league_id):
     """
     Recursively pulls all trades from the given league and its previous seasons.
-    Returns a list of trade transactions.
+    Also builds a mapping of traded rookie pick IDs to their most recent owner.
+    Returns:
+        - trades: list of trade transactions
+        - pick_owners: dict of {pick_id: owner_name}
     """
     all_trades = []
     current_league_id = league_id
     visited = set()
+    pick_owners = {}
+
+    # Lookup for roster_id → display name
+    league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
+    user_map = {user["user_id"]: user["display_name"] for user in league_users}
+    _, traded_pick_owners = get_all_trades_from_league(league_id)
+    
+    # Roster ID → user_id map (we need this to reverse lookups)
+    roster_map = {}
+    rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/rosters").json()
+    for r in rosters:
+        roster_map[str(r["roster_id"])] = r["owner_id"]
 
     while current_league_id and current_league_id not in visited:
         visited.add(current_league_id)
+        league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}").json()
+        season = league_info.get("season", "?")
 
-        league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}")
-        if league_info.status_code == 200:
-            season = league_info.json().get("season")
-        else:
-            break
-
-        for week in range(0, 19):
+        for week in range(1, 19):
             url = f"https://api.sleeper.app/v1/league/{current_league_id}/transactions/{week}"
             response = requests.get(url)
             if response.status_code == 200:
                 transactions = response.json()
-                trades = [
-                    dict(t, week=week, season=season)
-                    for t in transactions if t.get("type") == "trade"
-                ]
-                all_trades.extend(trades)
+                for t in transactions:
+                    if t.get("type") == "trade":
+                        all_trades.append(t)
+                        adds = t.get("adds") or {}
+                        for pid, roster_id in adds.items():
+                            if pid.startswith("2025_pick_"):
+                                owner_id = roster_map.get(str(roster_id))
+                                if owner_id and owner_id in user_map:
+                                    pick_owners[pid] = user_map[owner_id]
 
-        if league_info.status_code == 200:
-            current_league_id = league_info.json().get("previous_league_id")
-        else:
-            break
+        current_league_id = league_info.get("previous_league_id")
 
-    all_ids = set()
-    for trade in all_trades:
-        all_ids.update((trade.get("adds") or {}).keys())
-        all_ids.update((trade.get("drops") or {}).keys())
-
-    for pid in all_ids:
-        if isinstance(pid, str) and pid.startswith("rookie_") and pid not in player_pool:
-            player_pool[pid] = {
-                "full_name": format_pick_id(pid),
-                "position": "PICK",
-                "team": ""
-            }
-
-    return all_trades
+    return all_trades, pick_owners
 
 # --------------------
 # Pick formatter for rough rookie picks
