@@ -405,19 +405,33 @@ def load_league_data(league_id, ktc_df):
                 return playoff_finish_map.get(rid, 999)
         
             non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
-            playoff_sorted = sorted(playoff, key=playoff_sort_key)
-        
-            final_sorted = non_playoff_sorted + playoff_sorted
-            pick_order = [r["roster_id"] for r in final_sorted if r.get("roster_id")]
-            st.write("📊 Final Draft Pick Order (Bracket + Record):")
-            for i, r in enumerate(final_sorted):
-                name = user_map.get(r.get("owner_id"), f"Roster {r.get('roster_id')}")
-                rid = r.get("roster_id")
-                if rid in playoff_finish_map:
-                    label = f"Playoff Finish: {playoff_finish_map[rid]}"
-                else:
-                    label = "Non-playoff team"
-                st.write(f"Pick {i+1:02}: {name} — {label}")
+            # Sort non-playoff teams normally
+            non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
+            
+            # Sort playoff teams by finish (1st to 6th)
+            playoff_sorted_by_finish = sorted(playoff, key=playoff_sort_key)
+            
+            # Assign draft slots
+            # Non-playoff teams get picks 1.01–1.06
+            # Playoff finish 6 → pick 1.07, finish 5 → 1.08, ..., finish 1 → 1.12
+            non_playoff_order = [r["roster_id"] for r in non_playoff_sorted]
+            
+            # Build a mapping from playoff finish to that roster_id
+            playoff_finish_to_roster = {
+                playoff_finish_map[r["roster_id"]]: r["roster_id"]
+                for r in playoff_sorted_by_finish
+                if r["roster_id"] in playoff_finish_map
+            }
+            
+            # Assign playoff pick order from finish → slot
+            playoff_order = [
+                playoff_finish_to_roster.get(rank)
+                for rank in range(6, 0, -1)  # 6th place → 1.07, 1st place → 1.12
+                if playoff_finish_to_roster.get(rank)
+            ]
+            
+            # Combine both
+            pick_order = non_playoff_order + playoff_order
                 
         # 🧠 If previous season not found, fallback to current roster order
         if not pick_order:
