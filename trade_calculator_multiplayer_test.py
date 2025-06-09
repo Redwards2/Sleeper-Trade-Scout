@@ -375,12 +375,34 @@ def load_league_data(league_id, ktc_df):
                 s = r.get("settings", {})
                 return (-s.get("wins", 0), -s.get("fpts", 0))
         
-            # Sort playoff teams by how far they got (lower rank_playoff is better)
+            # 🧠 Build playoff finish map from bracket
+            playoff_finish_map = {}
+            
+            if winners_bracket:
+                for match in winners_bracket:
+                    place = match.get("p")
+                    winner = match.get("w")
+                    loser = match.get("l")
+            
+                    if place == 1:
+                        playoff_finish_map[winner] = 1  # 🥇
+                        if loser is not None:
+                            playoff_finish_map[loser] = 2  # 🥈
+            
+                    elif place == 3:
+                        playoff_finish_map[winner] = 3  # 🥉
+                        if loser is not None:
+                            playoff_finish_map[loser] = 4
+            
+                    elif place == 5:
+                        playoff_finish_map[winner] = 5
+                        if loser is not None:
+                            playoff_finish_map[loser] = 6
+            
+            # ✅ Use this function when sorting playoff teams
             def playoff_sort_key(r):
-                s = r.get("settings", {})
-                rank_playoff = s.get("rank_playoff")
-                seed = s.get("playoff_seed", 99)
-                return (rank_playoff if rank_playoff is not None else 99, seed)
+                rid = r.get("roster_id")
+                return playoff_finish_map.get(rid, 999)
         
             non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
             playoff_sorted = sorted(playoff, key=playoff_sort_key)
