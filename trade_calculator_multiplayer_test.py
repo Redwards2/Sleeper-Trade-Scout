@@ -219,24 +219,30 @@ def calculate_trade_value(players_df, selected_names, top_qbs, qb_premium_settin
     return selected_rows, total_ktc, total_qb_premium, total_bonus, adjusted_total
 
 def get_all_trades_from_league(league_id):
-    """
-    Recursively pulls all trades from the given league and its previous seasons.
-    Also builds a mapping of traded rookie pick IDs to their most recent owner.
-    Returns:
-        - trades: list of trade transactions
-        - pick_owners: dict of {pick_id: owner_name}
-    """
     all_trades = []
     current_league_id = league_id
     visited = set()
     pick_owners = {}
 
-    # Lookup for roster_id → display name
-    league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
+    # -- Try fetching users
+    try:
+        user_response = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users")
+        user_response.raise_for_status()
+        league_users = user_response.json()
+    except Exception as e:
+        print(f"Failed to get league users: {e}")
+        return [], {}  # return empty trades and pick map
+
     user_map = {user["user_id"]: user["display_name"] for user in league_users}
-    
-    # Roster ID → user_id map (we need this to reverse lookups)
-    roster_map = {}
+
+    # -- Now get rosters
+    try:
+        rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/rosters").json()
+    except Exception as e:
+        print(f"Failed to get rosters: {e}")
+        return [], {}
+
+    roster_map = {str(r["roster_id"]): r["owner_id"] for r in rosters}
     rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/rosters").json()
     for r in rosters:
         roster_map[str(r["roster_id"])] = r["owner_id"]
