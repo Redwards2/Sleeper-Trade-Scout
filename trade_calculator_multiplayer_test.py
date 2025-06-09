@@ -409,12 +409,15 @@ def load_league_data(league_id, ktc_df):
         
             final_sorted = non_playoff_sorted + playoff_sorted
             pick_order = [r["roster_id"] for r in final_sorted if r.get("roster_id")]
-            st.write("📊 Final Draft Pick Order (from standings):")
+            st.write("📊 Final Draft Pick Order (Bracket + Record):")
             for i, r in enumerate(final_sorted):
                 name = user_map.get(r.get("owner_id"), f"Roster {r.get('roster_id')}")
-                seed = r.get("settings", {}).get("playoff_seed")
-                finish = r.get("settings", {}).get("rank_playoff")
-                st.write(f"Pick {i+1:02}: {name} — Seed: {seed}, Finish: {finish}")
+                rid = r.get("roster_id")
+                if rid in playoff_finish_map:
+                    label = f"Playoff Finish: {playoff_finish_map[rid]}"
+                else:
+                    label = "Non-playoff team"
+                st.write(f"Pick {i+1:02}: {name} — {label}")
                 
         # 🧠 If previous season not found, fallback to current roster order
         if not pick_order:
