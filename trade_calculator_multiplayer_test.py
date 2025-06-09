@@ -376,7 +376,8 @@ def load_league_data(league_id, ktc_df):
     
         # 🧠 If previous season not found, fallback to current roster order
         if not pick_order:
-            st.warning("No previous season found — falling back to assigning picks using current rosters.")
+            if not is_redraft:
+                st.warning("No previous season found — falling back to assigning picks using current rosters.")
             pick_order = [r["roster_id"] for r in rosters]
         
         # ✅ Assign 2025 Round 1 Picks
