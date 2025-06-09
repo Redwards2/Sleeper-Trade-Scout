@@ -232,6 +232,7 @@ def load_league_data(league_id, ktc_df):
     rosters = requests.get(rosters_url).json()
 
     user_map = {user['user_id']: user['display_name'] for user in users}
+    _, traded_pick_owners = get_all_trades_from_league(league_id)
     data = []
 
     for roster in rosters:
@@ -816,7 +817,6 @@ def get_all_trades_from_league(league_id):
     # Lookup for roster_id → display name
     league_users = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/users").json()
     user_map = {user["user_id"]: user["display_name"] for user in league_users}
-    _, traded_pick_owners = get_all_trades_from_league(league_id)
     
     # Roster ID → user_id map (we need this to reverse lookups)
     roster_map = {}
