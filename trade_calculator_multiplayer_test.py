@@ -347,7 +347,9 @@ def load_league_data(league_id, ktc_df):
         pick_order = []
         if prev_league_id and not is_redraft:
             prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
-        
+            st.subheader("🧪 Raw Sleeper Roster Data for Previous Season")
+            st.json(prev_rosters)
+            
             # Split into playoff and non-playoff
             non_playoff = []
             playoff = []
