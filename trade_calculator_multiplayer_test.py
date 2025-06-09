@@ -338,6 +338,10 @@ def load_league_data(league_id, ktc_df):
     # Fetch previous league standings to assign rookie picks
     league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
     prev_league_id = league_info.get("previous_league_id")
+    if prev_league_id:
+        prev_league_info = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}").json()
+        st.subheader("🧪 Raw Sleeper League Info for Previous Season")
+        st.json(prev_league_info)
     is_redraft = str(league_info.get("settings", {}).get("type", "")).lower() not in {"dynasty", "2"}
 
     # Skip pick logic entirely for redraft leagues
