@@ -342,23 +342,32 @@ def load_league_data(league_id, ktc_df):
     pick_order = []
     if prev_league_id:
         prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
-        
-        def get_sort_key(r):
-            settings = r.get("settings", {})
-            # If final standing exists, use it
-            if settings.get("final_standing"):
-                return settings["final_standing"]
-            # Otherwise use record: wins (negated for sort order) and points scored
-            return (999, -settings.get("wins", 0), -settings.get("fpts", 0))
     
-    standings = sorted(prev_rosters, key=get_sort_key)
-    st.write("✅ Standings pulled from previous season:")
-    for r in standings:
-        st.write({
-            "roster_id": r.get("roster_id"),
-            "final_standing": r.get("settings", {}).get("final_standing")
-        })
-    pick_order = [r["roster_id"] for r in standings if r.get("roster_id")]
+        # Split into playoff and non-playoff
+        non_playoff = []
+        playoff = []
+    
+        for r in prev_rosters:
+            if r.get("settings", {}).get("playoff_seed"):
+                playoff.append(r)
+            else:
+                non_playoff.append(r)
+    
+        # Sort non-playoff teams by wins + points
+        def non_playoff_sort_key(r):
+            s = r.get("settings", {})
+            return (-s.get("wins", 0), -s.get("fpts", 0))
+    
+        # Sort playoff teams by how far they got (lower rank_playoff is better)
+        def playoff_sort_key(r):
+            s = r.get("settings", {})
+            return (s.get("rank_playoff", 999))
+    
+        non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
+        playoff_sorted = sorted(playoff, key=playoff_sort_key)
+    
+        final_sorted = non_playoff_sorted + playoff_sorted
+        pick_order = [r["roster_id"] for r in final_sorted if r.get("roster_id")]
 
     # 🧠 If previous season not found, fallback to current roster order
     if not pick_order:
