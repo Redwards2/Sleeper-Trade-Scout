@@ -250,6 +250,7 @@ def get_all_trades_from_league(league_id):
     while current_league_id and current_league_id not in visited:
         visited.add(current_league_id)
         league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}").json()
+        is_redraft = str(league_info.get("settings", {}).get("type", "")).lower() not in {"dynasty", "2"}
         season = league_info.get("season", "?")
 
         for week in range(1, 19):
@@ -339,88 +340,92 @@ def load_league_data(league_id, ktc_df):
     prev_league_id = league_info.get("previous_league_id")
     is_redraft = str(league_info.get("settings", {}).get("type", "")).lower() not in {"dynasty", "2"}
 
-    pick_order = []
-    if prev_league_id and not is_redraft:
-        prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
+    # Skip pick logic entirely for redraft leagues
+    if not is_redraft:
+        prev_league_id = league_info.get("previous_league_id")
     
-        # Split into playoff and non-playoff
-        non_playoff = []
-        playoff = []
-    
-        for r in prev_rosters:
-            if r.get("settings", {}).get("playoff_seed"):
-                playoff.append(r)
-            else:
-                non_playoff.append(r)
-    
-        # Sort non-playoff teams by wins + points
-        def non_playoff_sort_key(r):
-            s = r.get("settings", {})
-            return (-s.get("wins", 0), -s.get("fpts", 0))
-    
-        # Sort playoff teams by how far they got (lower rank_playoff is better)
-        def playoff_sort_key(r):
-            s = r.get("settings", {})
-            return (s.get("rank_playoff", 999))
-    
-        non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
-        playoff_sorted = sorted(playoff, key=playoff_sort_key)
-    
-        final_sorted = non_playoff_sorted + playoff_sorted
-        pick_order = [r["roster_id"] for r in final_sorted if r.get("roster_id")]
-
-    # 🧠 If previous season not found, fallback to current roster order
-    if not pick_order:
-        st.warning("No previous season found — falling back to assigning picks using current rosters.")
-        pick_order = [r["roster_id"] for r in rosters]
-    
-    # ✅ Assign 2025 Round 1 Picks
-    for idx, roster_id in enumerate(reversed(pick_order)):  # Champion gets 1.12
-        pick_num = idx + 1
-        pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
-        pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
+        pick_order = []
+        if prev_league_id and not is_redraft:
+            prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
         
-        # Check for traded ownership override
-        owner_name = traded_pick_owners.get(pick_id)
-        if not owner_name:
-            owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+            # Split into playoff and non-playoff
+            non_playoff = []
+            playoff = []
+        
+            for r in prev_rosters:
+                if r.get("settings", {}).get("playoff_seed"):
+                    playoff.append(r)
+                else:
+                    non_playoff.append(r)
+        
+            # Sort non-playoff teams by wins + points
+            def non_playoff_sort_key(r):
+                s = r.get("settings", {})
+                return (-s.get("wins", 0), -s.get("fpts", 0))
+        
+            # Sort playoff teams by how far they got (lower rank_playoff is better)
+            def playoff_sort_key(r):
+                s = r.get("settings", {})
+                return (s.get("rank_playoff", 999))
+        
+            non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
+            playoff_sorted = sorted(playoff, key=playoff_sort_key)
+        
+            final_sorted = non_playoff_sorted + playoff_sorted
+            pick_order = [r["roster_id"] for r in final_sorted if r.get("roster_id")]
+    
+        # 🧠 If previous season not found, fallback to current roster order
+        if not pick_order:
+            st.warning("No previous season found — falling back to assigning picks using current rosters.")
+            pick_order = [r["roster_id"] for r in rosters]
+        
+        # ✅ Assign 2025 Round 1 Picks
+        for idx, roster_id in enumerate(reversed(pick_order)):  # Champion gets 1.12
+            pick_num = idx + 1
+            pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
+            pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
             
-        ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
-        ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-        
-        data.append({
-            "Sleeper_Player_ID": pick_id,
-            "Player_Sleeper": pick_name,
-            "Position": "PICK",
-            "Team": "",
-            "Team_Owner": owner_name,
-            "Roster_ID": roster_id,
-            "KTC_Value": ktc_value  # ✅ pull from CSV now
-        })
-    
-    # ✅ Assign 2025 Round 2 Picks
-    for idx, roster_id in enumerate(reversed(pick_order)):  # Same order as round 1
-        pick_num = idx + 1
-        pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
-        pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
-        
-        # Check for traded ownership override
-        owner_name = traded_pick_owners.get(pick_id)
-        if not owner_name:
-            owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+            # Check for traded ownership override
+            owner_name = traded_pick_owners.get(pick_id)
+            if not owner_name:
+                owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+                
+            ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
+            ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
             
-        ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
-        ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
+            data.append({
+                "Sleeper_Player_ID": pick_id,
+                "Player_Sleeper": pick_name,
+                "Position": "PICK",
+                "Team": "",
+                "Team_Owner": owner_name,
+                "Roster_ID": roster_id,
+                "KTC_Value": ktc_value  # ✅ pull from CSV now
+            })
         
-        data.append({
-            "Sleeper_Player_ID": pick_id,
-            "Player_Sleeper": pick_name,
-            "Position": "PICK",
-            "Team": "",
-            "Team_Owner": owner_name,
-            "Roster_ID": roster_id,
-            "KTC_Value": ktc_value  # ✅ pull from CSV now
-        })
+        # ✅ Assign 2025 Round 2 Picks
+        for idx, roster_id in enumerate(reversed(pick_order)):  # Same order as round 1
+            pick_num = idx + 1
+            pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
+            pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
+            
+            # Check for traded ownership override
+            owner_name = traded_pick_owners.get(pick_id)
+            if not owner_name:
+                owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+                
+            ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
+            ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
+            
+            data.append({
+                "Sleeper_Player_ID": pick_id,
+                "Player_Sleeper": pick_name,
+                "Position": "PICK",
+                "Team": "",
+                "Team_Owner": owner_name,
+                "Roster_ID": roster_id,
+                "KTC_Value": ktc_value  # ✅ pull from CSV now
+            })
 
     return pd.DataFrame(data), player_pool
 
