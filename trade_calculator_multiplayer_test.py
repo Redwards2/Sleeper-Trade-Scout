@@ -366,7 +366,9 @@ def load_league_data(league_id, ktc_df):
             # Sort playoff teams by how far they got (lower rank_playoff is better)
             def playoff_sort_key(r):
                 s = r.get("settings", {})
-                return (s.get("rank_playoff", 999))
+                rank_playoff = s.get("rank_playoff")
+                seed = s.get("playoff_seed", 99)
+                return (rank_playoff if rank_playoff is not None else 99, seed)
         
             non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
             playoff_sorted = sorted(playoff, key=playoff_sort_key)
