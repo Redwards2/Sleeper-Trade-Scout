@@ -440,7 +440,7 @@ def load_league_data(league_id, ktc_df):
             pick_order = [r["roster_id"] for r in rosters]
         
         # ✅ Assign 2025 Round 1 Picks
-        for idx, roster_id in enumerate(reversed(pick_order)):  # Champion gets 1.12
+        for idx, roster_id in enumerate(pick_order):  # Champion gets 1.12
             pick_num = idx + 1
             pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
@@ -464,7 +464,7 @@ def load_league_data(league_id, ktc_df):
             })
         
         # ✅ Assign 2025 Round 2 Picks
-        for idx, roster_id in enumerate(reversed(pick_order)):  # Same order as round 1
+        for idx, roster_id in enumerate(pick_order):  # Same order as round 1
             pick_num = idx + 1
             pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
