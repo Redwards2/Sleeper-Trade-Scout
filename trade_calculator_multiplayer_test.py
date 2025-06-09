@@ -843,10 +843,10 @@ def ordinal(n):
 # Pick formatter for rookie picks
 # --------------------
 def format_pick_id(pid):
-    if pid.startswith("rookie_"):
-        parts = pid.split("_")  # example: rookie_1_04
-        if len(parts) == 3:
-            return f"{2025 if int(parts[1]) <= 4 else 2026} Round {parts[1]}.{parts[2]} Pick"
+    if "pick" in pid:
+        parts = pid.split("_")  # example: 2025_pick_1_01
+        if len(parts) == 4 and parts[1] == "pick":
+            return f"{parts[0]} Pick {parts[2]}.{parts[3]}"
     return pid
 
 
