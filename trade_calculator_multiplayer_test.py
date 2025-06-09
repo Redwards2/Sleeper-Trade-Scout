@@ -407,7 +407,9 @@ if username:
 
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
-        
+        with st.expander("🧪 DEBUG: All Picks Pulled", expanded=False):
+            st.dataframe(df[df["Position"] == "PICK"])
+            
          # Sidebar: List custom scoring settings
         non_default_settings = []
         for k, v in scoring.items():
