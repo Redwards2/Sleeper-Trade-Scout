@@ -286,11 +286,32 @@ def load_league_data(league_id, ktc_df):
         standings = sorted(prev_rosters, key=lambda x: x.get("settings", {}).get("final_standing", 999))
         pick_order = [r["roster_id"] for r in standings if r.get("settings", {}).get("final_standing")]
 
-    # Assign 2025 1st round picks based on standings
-    for idx, roster_id in enumerate(reversed(pick_order)):  # Champion gets 1.12, last gets 1.01
-        pick_number = idx + 1
-        pick_name = f"2025 Pick 1.{str(pick_number).zfill(2)}"
-        pick_id = f"2025_pick_1_{str(pick_number).zfill(2)}"
+    # 🧠 If previous season not found, fallback to current roster order
+    if not pick_order:
+        st.warning("No previous season found — falling back to assigning picks using current rosters.")
+        pick_order = [r["roster_id"] for r in rosters]
+    
+    # ✅ Assign 2025 Round 1 Picks
+    for idx, roster_id in enumerate(reversed(pick_order)):  # Champion gets 1.12
+        pick_num = idx + 1
+        pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
+        pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
+        owner_name = user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}")
+        data.append({
+            "Sleeper_Player_ID": pick_id,
+            "Player_Sleeper": pick_name,
+            "Position": "PICK",
+            "Team": "",
+            "Team_Owner": owner_name,
+            "Roster_ID": roster_id,
+            "KTC_Value": 0
+        })
+    
+    # ✅ Assign 2025 Round 2 Picks
+    for idx, roster_id in enumerate(reversed(pick_order)):  # Same order as round 1
+        pick_num = idx + 1
+        pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
+        pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
         owner_name = user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}")
         data.append({
             "Sleeper_Player_ID": pick_id,
