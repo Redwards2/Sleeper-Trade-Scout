@@ -342,14 +342,23 @@ def load_league_data(league_id, ktc_df):
     pick_order = []
     if prev_league_id:
         prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
-        standings = sorted(prev_rosters, key=lambda x: x.get("settings", {}).get("final_standing", 999))
-        st.write("✅ Standings pulled from previous season:")
-        for r in standings:
-            st.write({
-                "roster_id": r.get("roster_id"),
-                "final_standing": r.get("settings", {}).get("final_standing")
-            })
-        pick_order = [r["roster_id"] for r in standings if r.get("settings", {}).get("final_standing")]
+        
+        def get_sort_key(r):
+            settings = r.get("settings", {})
+            # If final standing exists, use it
+            if settings.get("final_standing"):
+                return settings["final_standing"]
+            # Otherwise use record: wins (negated for sort order) and points scored
+            return (999, -settings.get("wins", 0), -settings.get("fpts", 0))
+    
+    standings = sorted(prev_rosters, key=get_sort_key)
+    st.write("✅ Standings pulled from previous season:")
+    for r in standings:
+        st.write({
+            "roster_id": r.get("roster_id"),
+            "final_standing": r.get("settings", {}).get("final_standing")
+        })
+    pick_order = [r["roster_id"] for r in standings if r.get("roster_id")]
 
     # 🧠 If previous season not found, fallback to current roster order
     if not pick_order:
