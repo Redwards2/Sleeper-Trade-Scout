@@ -337,10 +337,10 @@ def load_league_data(league_id, ktc_df):
     # Fetch previous league standings to assign rookie picks
     league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
     prev_league_id = league_info.get("previous_league_id")
-    st.write("Prev season ID:", prev_league_id)
+    is_redraft = str(league_info.get("settings", {}).get("type", "")).lower() not in {"dynasty", "2"}
 
     pick_order = []
-    if prev_league_id:
+    if prev_league_id and not is_redraft:
         prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
     
         # Split into playoff and non-playoff
