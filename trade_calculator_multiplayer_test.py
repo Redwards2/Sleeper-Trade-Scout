@@ -297,6 +297,9 @@ def load_league_data(league_id, ktc_df):
         pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
         pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
         owner_name = user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}")
+        ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
+        ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
+        
         data.append({
             "Sleeper_Player_ID": pick_id,
             "Player_Sleeper": pick_name,
@@ -304,7 +307,7 @@ def load_league_data(league_id, ktc_df):
             "Team": "",
             "Team_Owner": owner_name,
             "Roster_ID": roster_id,
-            "KTC_Value": 0
+            "KTC_Value": ktc_value  # ✅ pull from CSV now
         })
     
     # ✅ Assign 2025 Round 2 Picks
@@ -313,6 +316,9 @@ def load_league_data(league_id, ktc_df):
         pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
         pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
         owner_name = user_map.get(rosters[roster_id-1]['owner_id'], f"User {roster_id}")
+        ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
+        ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
+        
         data.append({
             "Sleeper_Player_ID": pick_id,
             "Player_Sleeper": pick_name,
@@ -320,7 +326,7 @@ def load_league_data(league_id, ktc_df):
             "Team": "",
             "Team_Owner": owner_name,
             "Roster_ID": roster_id,
-            "KTC_Value": 0
+            "KTC_Value": ktc_value  # ✅ pull from CSV now
         })
 
     return pd.DataFrame(data), player_pool
