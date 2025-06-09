@@ -440,19 +440,29 @@ def load_league_data(league_id, ktc_df):
             pick_order = [r["roster_id"] for r in rosters]
         
         # ✅ Assign 2025 Round 1 Picks
-        for idx, roster_id in enumerate(pick_order):  # Champion gets 1.12
-            pick_num = idx + 1
+        for idx in range(len(pick_order)):
+            # Index in pick_order
+            roster_id = pick_order[idx]
+            
+            # Adjust playoff section (last 6 picks)
+            if idx >= len(pick_order) - 6:
+                # Rewrite order: playoff finish 6 → pick 1.07, finish 1 → pick 1.12
+                playoff_index = idx - (len(pick_order) - 6)
+                pick_num = 6 + (6 - playoff_index)
+            else:
+                # Non-playoff picks remain in order
+                pick_num = idx + 1
+        
             pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
-            
-            # Check for traded ownership override
+        
             owner_name = traded_pick_owners.get(pick_id)
             if not owner_name:
                 owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
-                
+        
             ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
             ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-            
+        
             data.append({
                 "Sleeper_Player_ID": pick_id,
                 "Player_Sleeper": pick_name,
@@ -460,23 +470,29 @@ def load_league_data(league_id, ktc_df):
                 "Team": "",
                 "Team_Owner": owner_name,
                 "Roster_ID": roster_id,
-                "KTC_Value": ktc_value  # ✅ pull from CSV now
+                "KTC_Value": ktc_value
             })
         
         # ✅ Assign 2025 Round 2 Picks
-        for idx, roster_id in enumerate(pick_order):  # Same order as round 1
-            pick_num = idx + 1
+        for idx in range(len(pick_order)):
+            roster_id = pick_order[idx]
+        
+            if idx >= len(pick_order) - 6:
+                playoff_index = idx - (len(pick_order) - 6)
+                pick_num = 6 + (6 - playoff_index)
+            else:
+                pick_num = idx + 1
+        
             pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
-            
-            # Check for traded ownership override
+        
             owner_name = traded_pick_owners.get(pick_id)
             if not owner_name:
                 owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
-                
+        
             ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
             ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-            
+        
             data.append({
                 "Sleeper_Player_ID": pick_id,
                 "Player_Sleeper": pick_name,
@@ -484,7 +500,7 @@ def load_league_data(league_id, ktc_df):
                 "Team": "",
                 "Team_Owner": owner_name,
                 "Roster_ID": roster_id,
-                "KTC_Value": ktc_value  # ✅ pull from CSV now
+                "KTC_Value": ktc_value
             })
 
     return pd.DataFrame(data), player_pool
