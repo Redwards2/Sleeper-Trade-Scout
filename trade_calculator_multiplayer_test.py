@@ -337,6 +337,7 @@ def load_league_data(league_id, ktc_df):
     # Fetch previous league standings to assign rookie picks
     league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
     prev_league_id = league_info.get("previous_league_id")
+    st.write("Prev season ID:", prev_league_id)
 
     pick_order = []
     if prev_league_id:
