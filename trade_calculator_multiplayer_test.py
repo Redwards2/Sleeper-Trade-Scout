@@ -396,8 +396,9 @@ def load_league_data(league_id, ktc_df):
 
             # Now build playoff_order in exact slot order (7 → 12)
             playoff_order = [
-                rid for slot in range(7, 13)
-                if (rid := playoff_order_map.get(slot)) is not None
+                playoff_order_map.get(slot)["roster_id"]
+                for slot in range(7, 13)
+                if playoff_order_map.get(slot)
             ] 
             
             # ✅ Use this function when sorting playoff teams
