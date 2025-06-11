@@ -423,8 +423,11 @@ def load_league_data(league_id, ktc_df):
         
             owner_name = traded_pick_owners.get(pick_id)
             if not owner_name:
-                owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
-        
+                try:
+                    owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+                except (TypeError, IndexError, KeyError):
+                    owner_name = f"User {roster_id}"
+                        
             ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
             ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
         
@@ -447,7 +450,10 @@ def load_league_data(league_id, ktc_df):
         
             owner_name = traded_pick_owners.get(pick_id)
             if not owner_name:
-                owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+                try:
+                    owner_name = user_map.get(rosters[roster_id - 1]['owner_id'], f"User {roster_id}")
+                except (TypeError, IndexError, KeyError):
+                    owner_name = f"User {roster_id}"
         
             ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
             ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
