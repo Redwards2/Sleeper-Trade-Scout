@@ -412,7 +412,16 @@ def load_league_data(league_id, ktc_df):
                 
         # 🧠 If previous season not found, fallback to current roster order
         # Assign 2025 Round 1 Picks
-        for idx, roster_id in enumerate(pick_order):
+        for idx, roster in enumerate(pick_order):
+            if isinstance(roster, dict):
+                roster_id = roster.get("roster_id")
+                owner_id = roster.get("owner_id")
+            else:
+                roster_id = roster
+                # Find the roster dict to get owner_id
+                roster_dict = next((r for r in rosters if r["roster_id"] == roster_id), None)
+                owner_id = roster_dict.get("owner_id") if roster_dict else None
+        
             pick_num = idx + 1
         
             pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
@@ -420,13 +429,8 @@ def load_league_data(league_id, ktc_df):
         
             owner_name = traded_pick_owners.get(pick_id)
             if not owner_name:
-                try:
-                    roster = next(r for r in rosters if r["roster_id"] == roster_id)
-                    owner_id = roster.get("owner_id")
-                    owner_name = user_map.get(owner_id, f"User {roster_id}")
-                except Exception:
-                    owner_name = f"User {roster_id}"
-                        
+                owner_name = user_map.get(owner_id, f"User {roster_id}")
+        
             ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
             ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
         
@@ -441,7 +445,16 @@ def load_league_data(league_id, ktc_df):
             })
         
         # Assign 2025 Round 2 Picks
-        for idx, roster_id in enumerate(pick_order):
+        for idx, roster in enumerate(pick_order):
+            if isinstance(roster, dict):
+                roster_id = roster.get("roster_id")
+                owner_id = roster.get("owner_id")
+            else:
+                roster_id = roster
+                # Find the roster dict to get owner_id
+                roster_dict = next((r for r in rosters if r["roster_id"] == roster_id), None)
+                owner_id = roster_dict.get("owner_id") if roster_dict else None
+        
             pick_num = idx + 1
         
             pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
@@ -449,12 +462,7 @@ def load_league_data(league_id, ktc_df):
         
             owner_name = traded_pick_owners.get(pick_id)
             if not owner_name:
-                try:
-                    roster = next(r for r in rosters if r["roster_id"] == roster_id)
-                    owner_id = roster.get("owner_id")
-                    owner_name = user_map.get(owner_id, f"User {roster_id}")
-                except Exception:
-                    owner_name = f"User {roster_id}"
+                owner_name = user_map.get(owner_id, f"User {roster_id}")
         
             ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
             ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
