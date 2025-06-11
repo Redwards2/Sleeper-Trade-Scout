@@ -243,9 +243,6 @@ def get_all_trades_from_league(league_id):
         return [], {}
 
     roster_map = {str(r["roster_id"]): r["owner_id"] for r in rosters}
-    rosters = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/rosters").json()
-    for r in rosters:
-        roster_map[str(r["roster_id"])] = r["owner_id"]
 
     while current_league_id and current_league_id not in visited:
         visited.add(current_league_id)
