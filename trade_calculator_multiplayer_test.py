@@ -375,8 +375,8 @@ def load_league_data(league_id, ktc_df):
                 s = r.get("settings", {})
                 return (-s.get("wins", 0), -s.get("fpts", 0))
         
-            # 🧠 Build playoff finish map from bracket
-            playoff_finish_map = {}
+            # 🧠 Build playoff order map from bracket
+            playoff_order_map = {}
             
             if winners_bracket:
                 for match in winners_bracket:
@@ -395,18 +395,20 @@ def load_league_data(league_id, ktc_df):
                         playoff_order_map[7] = loser    # 1.07
 
             # Now build playoff_order in exact slot order (7 → 12)
-            playoff_order = [playoff_order_map.get(slot) for slot in range(7, 13) if playoff_order_map.get(slot)]
-                    
+            playoff_order = [
+                playoff_order_map.get(slot) 
+                for slot in range(7, 13)
+                if playoff_order_map
+            ] 
+            
             # ✅ Use this function when sorting playoff teams
             def playoff_sort_key(r):
                 rid = r.get("roster_id")
                 return playoff_finish_map.get(rid, 999)
         
             non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
-            # Sort non-playoff teams normally
-            non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
             
-            # Combine both
+            # Combine non-playoff picks (worst first) + playoff picks
             # Limit to actual number of teams in league
             total_teams = len(rosters)
             pick_order = (non_playoff_order + playoff_order)[:total_teams]
