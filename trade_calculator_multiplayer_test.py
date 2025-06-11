@@ -414,21 +414,18 @@ def load_league_data(league_id, ktc_df):
             # Assign draft slots
             # Non-playoff teams get picks 1.01–1.06
             # Playoff finish 6 → pick 1.07, finish 5 → 1.08, ..., finish 1 → 1.12
-            non_playoff_order = [r["roster_id"] for r in non_playoff_sorted]
+            non_playoff_order = [r["roster_id"] for r in reversed(non_playoff_sorted)]
             
-            # Build a mapping from playoff finish to that roster_id
-            playoff_finish_to_roster = {
-                playoff_finish_map[r["roster_id"]]: r["roster_id"]
-                for r in playoff_sorted_by_finish
-                if r["roster_id"] in playoff_finish_map
-            }
+            # Assign playoff pick order from finish → slot (finish 6 → 1.07, finish 1 → 1.12)
+            playoff_order = [None] * 6  # placeholders for 6 picks
             
-            # Assign playoff pick order from finish → slot
-            playoff_order = [
-                playoff_finish_to_roster.get(rank)
-                for rank in range(6, 0, -1)  # 6th place → 1.07, 1st place → 1.12
-                if playoff_finish_to_roster.get(rank)
-            ]
+            for roster_id, finish in playoff_finish_map.items():
+                if 1 <= finish <= 6:
+                    index = 6 - finish  # 6th place goes to index 0 (1.07), 1st to index 5 (1.12)
+                    playoff_order[index] = roster_id
+            
+            # Remove any None entries just in case
+            playoff_order = [rid for rid in playoff_order if rid]
             
             # Combine both
             pick_order = non_playoff_order + playoff_order
