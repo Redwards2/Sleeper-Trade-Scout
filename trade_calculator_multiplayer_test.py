@@ -384,21 +384,19 @@ def load_league_data(league_id, ktc_df):
                     winner = match.get("w")
                     loser = match.get("l")
             
-                    if place == 1:
-                        playoff_finish_map[winner] = 1  # 🥇
-                        if loser is not None:
-                            playoff_finish_map[loser] = 2  # 🥈
-            
-                    elif place == 3:
-                        playoff_finish_map[winner] = 3  # 🥉
-                        if loser is not None:
-                            playoff_finish_map[loser] = 4
-            
-                    elif place == 5:
-                        playoff_finish_map[winner] = 5
-                        if loser is not None:
-                            playoff_finish_map[loser] = 6
-            
+                    if place == 1:  # Championship
+                        playoff_order_map[12] = winner  # 1.12
+                        playoff_order_map[11] = loser   # 1.11
+                    elif place == 3:  # 3rd place game
+                        playoff_order_map[10] = winner  # 1.10
+                        playoff_order_map[9] = loser    # 1.09
+                    elif place == 5:  # 5th place game
+                        playoff_order_map[8] = winner   # 1.08
+                        playoff_order_map[7] = loser    # 1.07
+
+            # Now build playoff_order in exact slot order (7 → 12)
+            playoff_order = [playoff_order_map.get(slot) for slot in range(7, 13) if playoff_order_map.get(slot)
+                    
             # ✅ Use this function when sorting playoff teams
             def playoff_sort_key(r):
                 rid = r.get("roster_id")
@@ -408,27 +406,10 @@ def load_league_data(league_id, ktc_df):
             # Sort non-playoff teams normally
             non_playoff_sorted = sorted(non_playoff, key=non_playoff_sort_key)
             
-            # Sort playoff teams by finish (1st to 6th)
-            playoff_sorted_by_finish = sorted(playoff, key=playoff_sort_key)
-            
-            # Assign draft slots
-            # Non-playoff teams get picks 1.01–1.06
-            # Playoff finish 6 → pick 1.07, finish 5 → 1.08, ..., finish 1 → 1.12
-            non_playoff_order = [r["roster_id"] for r in reversed(non_playoff_sorted)]
-            
-            # Assign playoff pick order from finish → slot (finish 6 → 1.07, finish 1 → 1.12)
-            playoff_order = [None] * 6  # placeholders for 6 picks
-            
-            for roster_id, finish in playoff_finish_map.items():
-                if 1 <= finish <= 6:
-                    index = 6 - finish  # 6th place goes to index 0 (1.07), 1st to index 5 (1.12)
-                    playoff_order[index] = roster_id
-            
-            # Remove any None entries just in case
-            playoff_order = [rid for rid in playoff_order if rid]
-            
             # Combine both
-            pick_order = non_playoff_order + playoff_order
+            # Limit to actual number of teams in league
+            total_teams = len(rosters)
+            pick_order = (non_playoff_order + playoff_order)[:total_teams]
                 
         # 🧠 If previous season not found, fallback to current roster order
         # Assign 2025 Round 1 Picks
