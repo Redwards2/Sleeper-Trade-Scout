@@ -434,24 +434,21 @@ def load_league_data(league_id, ktc_df):
             pick_order = non_playoff_order + playoff_order
                 
         # 🧠 If previous season not found, fallback to current roster order
-        if not pick_order:
-            if not is_redraft:
-                st.warning("No previous season found — falling back to assigning picks using current rosters.")
-            pick_order = [r["roster_id"] for r in rosters]
-        
-        # ✅ Assign 2025 Round 1 Picks
-        for idx in range(len(pick_order)):
-            # Index in pick_order
-            roster_id = pick_order[idx]
-            
-            # Adjust playoff section (last 6 picks)
-            if idx >= len(pick_order) - 6:
-                # Rewrite order: playoff finish 6 → pick 1.07, finish 1 → pick 1.12
-                playoff_index = idx - (len(pick_order) - 6)
-                pick_num = 6 + (6 - playoff_index)
-            else:
-                # Non-playoff picks remain in order
+        # Assign 2025 Round 1 Picks
+        for idx, roster_id in enumerate(pick_order):
+            if idx < 6:
+                # Non-playoff pick (1.01 to 1.06)
                 pick_num = idx + 1
+            else:
+                # Playoff pick (1.07 to 1.12), map using playoff finish rank
+                # Get the playoff finish for this roster ID
+                finish_rank = playoff_finish_map.get(roster_id)
+                if finish_rank:
+                    # Finish 1st = 1.12 → so: 13 - finish_rank
+                    pick_num = 13 - finish_rank
+                else:
+                    # Fallback if no known finish
+                    pick_num = idx + 1
         
             pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
@@ -473,15 +470,21 @@ def load_league_data(league_id, ktc_df):
                 "KTC_Value": ktc_value
             })
         
-        # ✅ Assign 2025 Round 2 Picks
-        for idx in range(len(pick_order)):
-            roster_id = pick_order[idx]
-        
-            if idx >= len(pick_order) - 6:
-                playoff_index = idx - (len(pick_order) - 6)
-                pick_num = 6 + (6 - playoff_index)
-            else:
+        # Assign 2025 Round 2 Picks
+        for idx, roster_id in enumerate(pick_order):
+            if idx < 6:
+                # Non-playoff pick (1.01 to 1.06)
                 pick_num = idx + 1
+            else:
+                # Playoff pick (1.07 to 1.12), map using playoff finish rank
+                # Get the playoff finish for this roster ID
+                finish_rank = playoff_finish_map.get(roster_id)
+                if finish_rank:
+                    # Finish 1st = 1.12 → so: 13 - finish_rank
+                    pick_num = 13 - finish_rank
+                else:
+                    # Fallback if no known finish
+                    pick_num = idx + 1
         
             pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
