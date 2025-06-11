@@ -358,124 +358,89 @@ def load_league_data(league_id, ktc_df):
             st.json(prev_rosters)
             
             # Split into playoff and non-playoff
-            non_playoff = []
-            playoff = []
-        
-            for r in prev_rosters:
-                if r.get("settings", {}).get("playoff_seed"):
-                    playoff.append(r)
-                else:
-                    non_playoff.append(r)
-        
-            # Sort non-playoff teams by wins + points
-            def non_playoff_sort_key(r):
-                s = r.get("settings", {})
-                return (-s.get("wins", 0), -s.get("fpts", 0))
-        
-            # 🧠 Build playoff order map from bracket
-            playoff_order_map = {}
-            
-            if winners_bracket:
-                for match in winners_bracket:
-                    place = match.get("p")
-                    winner = match.get("w")
-                    loser = match.get("l")
-            
-                    if place == 1:  # Championship
-                        playoff_order_map[12] = winner  # 1.12
-                        playoff_order_map[11] = loser   # 1.11
-                    elif place == 3:  # 3rd place game
-                        playoff_order_map[10] = winner  # 1.10
-                        playoff_order_map[9] = loser    # 1.09
-                    elif place == 5:  # 5th place game
-                        playoff_order_map[8] = winner   # 1.08
-                        playoff_order_map[7] = loser    # 1.07
+            # -- After you build 'non_playoff' and 'playoff', plus the playoff_order_map, do this:
 
-            # Now build playoff_order in exact slot order (7 → 12)
-            playoff_order = []
-            for slot in range(7, 13):
+            # 1. Sort non-playoff teams (worst to best)
+            non_playoff_sorted = sorted(non_playoff, key=lambda r: (
+                -r.get("settings", {}).get("wins", 0),  # Fewest wins
+                -r.get("settings", {}).get("fpts", 0)   # Fewest points
+            ))
+            
+            # 2. Build playoff finish order from winners_bracket
+            # You should already have a playoff_order_map like {7: roster_id, 8: roster_id, ..., 12: roster_id}
+            # Let's make a list of playoff roster_ids for slots 7-12 (1.07 to 1.12)
+            playoff_picks = []
+            for slot in range(7, 13):  # 7–12 inclusive
                 rid = playoff_order_map.get(slot)
-                if isinstance(rid, int):
-                    playoff_order.append(rid) 
+                if rid is not None:
+                    playoff_picks.append(rid)
             
-            # ✅ Use this function when sorting playoff teams
-            def playoff_sort_key(r):
-                rid = r.get("roster_id")
-                return playoff_finish_map.get(rid, 999)
-        
-            non_playoff_order = sorted(non_playoff, key=non_playoff_sort_key)
+            # 3. Now combine for full pick order:
+            #   - First 6 picks: non-playoff teams
+            #   - Next 6: playoff finishers
+            pick_order = [r.get("roster_id") for r in non_playoff_sorted[:6]] + playoff_picks
             
-            # Combine non-playoff picks (worst first) + playoff picks
-            # Limit to actual number of teams in league
-            total_teams = len(rosters)
-            pick_order = (non_playoff_order + playoff_order)[:total_teams]
-                
-        # 🧠 If previous season not found, fallback to current roster order
-        # Assign 2025 Round 1 Picks
-        for idx, roster in enumerate(pick_order):
-            if isinstance(roster, dict):
-                roster_id = roster.get("roster_id")
-                owner_id = roster.get("owner_id")
-            else:
-                roster_id = roster
-                # Find the roster dict to get owner_id
-                roster_dict = next((r for r in rosters if r["roster_id"] == roster_id), None)
-                owner_id = roster_dict.get("owner_id") if roster_dict else None
-        
-            pick_num = idx + 1
-        
-            pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
-            pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
-        
-            owner_name = traded_pick_owners.get(pick_id)
-            if not owner_name:
-                owner_name = user_map.get(owner_id, f"User {roster_id}")
-        
-            ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
-            ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-        
-            data.append({
-                "Sleeper_Player_ID": pick_id,
-                "Player_Sleeper": pick_name,
-                "Position": "PICK",
-                "Team": "",
-                "Team_Owner": owner_name,
-                "Roster_ID": roster_id,
-                "KTC_Value": ktc_value
-            })
-        
-        # Assign 2025 Round 2 Picks
-        for idx, roster in enumerate(pick_order):
-            if isinstance(roster, dict):
-                roster_id = roster.get("roster_id")
-                owner_id = roster.get("owner_id")
-            else:
-                roster_id = roster
-                # Find the roster dict to get owner_id
-                roster_dict = next((r for r in rosters if r["roster_id"] == roster_id), None)
-                owner_id = roster_dict.get("owner_id") if roster_dict else None
-        
-            pick_num = idx + 1
-        
-            pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
-            pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
-        
-            owner_name = traded_pick_owners.get(pick_id)
-            if not owner_name:
-                owner_name = user_map.get(owner_id, f"User {roster_id}")
-        
-            ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
-            ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-        
-            data.append({
-                "Sleeper_Player_ID": pick_id,
-                "Player_Sleeper": pick_name,
-                "Position": "PICK",
-                "Team": "",
-                "Team_Owner": owner_name,
-                "Roster_ID": roster_id,
-                "KTC_Value": ktc_value
-            })
+            # 4. Now assign the picks
+            for idx, roster_id in enumerate(pick_order):
+                pick_num = idx + 1  # 1-based
+                pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
+                pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
+            
+                # Find owner_id for the roster
+                roster = next((r for r in rosters if r["roster_id"] == roster_id), None)
+                owner_id = roster.get("owner_id") if roster else None
+            
+                # -- PATCH for replaced owners
+                # If owner_id not in user_map, look for 'metadata' or another way to pull current owner
+                owner_name = traded_pick_owners.get(pick_id)
+                if not owner_name:
+                    owner_name = user_map.get(owner_id)
+                    if not owner_name:
+                        # Try to recover a display name from the 'users' object, matching on roster_id if needed
+                        replacement = next((u['display_name'] for u in users if str(u.get('user_id')) == str(owner_id) or str(u.get('user_id')) == str(roster_id)), None)
+                        owner_name = replacement if replacement else f"Team {roster_id}"
+            
+                ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
+                ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
+            
+                data.append({
+                    "Sleeper_Player_ID": pick_id,
+                    "Player_Sleeper": pick_name,
+                    "Position": "PICK",
+                    "Team": "",
+                    "Team_Owner": owner_name,
+                    "Roster_ID": roster_id,
+                    "KTC_Value": ktc_value
+                })
+            
+            # -- Repeat exactly for Round 2 picks:
+            for idx, roster_id in enumerate(pick_order):
+                pick_num = idx + 1
+                pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
+                pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
+            
+                roster = next((r for r in rosters if r["roster_id"] == roster_id), None)
+                owner_id = roster.get("owner_id") if roster else None
+            
+                owner_name = traded_pick_owners.get(pick_id)
+                if not owner_name:
+                    owner_name = user_map.get(owner_id)
+                    if not owner_name:
+                        replacement = next((u['display_name'] for u in users if str(u.get('user_id')) == str(owner_id) or str(u.get('user_id')) == str(roster_id)), None)
+                        owner_name = replacement if replacement else f"Team {roster_id}"
+            
+                ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
+                ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
+            
+                data.append({
+                    "Sleeper_Player_ID": pick_id,
+                    "Player_Sleeper": pick_name,
+                    "Position": "PICK",
+                    "Team": "",
+                    "Team_Owner": owner_name,
+                    "Roster_ID": roster_id,
+                    "KTC_Value": ktc_value
+                })
 
     return pd.DataFrame(data), player_pool
 
