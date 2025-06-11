@@ -337,13 +337,6 @@ def load_league_data(league_id, ktc_df):
     prev_league_id = league_info.get("previous_league_id")
     if prev_league_id:
         prev_league_info = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}").json()
-        st.subheader("🧪 Raw Sleeper League Info for Previous Season")
-        st.json(prev_league_info)
-        
-        winners_bracket_url = f"https://api.sleeper.app/v1/league/{prev_league_id}/winners_bracket"
-        winners_bracket = requests.get(winners_bracket_url).json()
-        st.subheader("🏆 Winners Bracket Data (Sleeper API)")
-        st.json(winners_bracket)
         
     is_redraft = str(league_info.get("settings", {}).get("type", "")).lower() not in {"dynasty", "2"}
 
@@ -354,8 +347,6 @@ def load_league_data(league_id, ktc_df):
         pick_order = []
         if prev_league_id and not is_redraft:
             prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
-            st.subheader("🧪 Raw Sleeper Roster Data for Previous Season")
-            st.json(prev_rosters)
             
             # === 1. Split previous season's rosters into non-playoff and playoff
             non_playoff = []
