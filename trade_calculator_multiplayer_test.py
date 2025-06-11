@@ -436,19 +436,7 @@ def load_league_data(league_id, ktc_df):
         # 🧠 If previous season not found, fallback to current roster order
         # Assign 2025 Round 1 Picks
         for idx, roster_id in enumerate(pick_order):
-            if idx < 6:
-                # Non-playoff pick (1.01 to 1.06)
-                pick_num = idx + 1
-            else:
-                # Playoff pick (1.07 to 1.12), map using playoff finish rank
-                # Get the playoff finish for this roster ID
-                finish_rank = playoff_finish_map.get(roster_id)
-                if finish_rank:
-                    # Finish 1st = 1.12 → so: 13 - finish_rank
-                    pick_num = 13 - finish_rank
-                else:
-                    # Fallback if no known finish
-                    pick_num = idx + 1
+            pick_num = idx + 1
         
             pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
@@ -472,19 +460,7 @@ def load_league_data(league_id, ktc_df):
         
         # Assign 2025 Round 2 Picks
         for idx, roster_id in enumerate(pick_order):
-            if idx < 6:
-                # Non-playoff pick (1.01 to 1.06)
-                pick_num = idx + 1
-            else:
-                # Playoff pick (1.07 to 1.12), map using playoff finish rank
-                # Get the playoff finish for this roster ID
-                finish_rank = playoff_finish_map.get(roster_id)
-                if finish_rank:
-                    # Finish 1st = 1.12 → so: 13 - finish_rank
-                    pick_num = 13 - finish_rank
-                else:
-                    # Fallback if no known finish
-                    pick_num = idx + 1
+            pick_num = idx + 1
         
             pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
             pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
