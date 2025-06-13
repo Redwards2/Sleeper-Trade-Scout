@@ -861,45 +861,6 @@ if username:
                     results_3for1 = []
                     for combo in combinations(my_players_list, 3):
                         value = combo[0]["KTC_Value"] + combo[1]["KTC_Value"] + combo[2]["KTC_Value"]
-                        # QB premium for each QB in combo
-                        if combo[0]["Position"] == "QB" and combo[0]["Player_Sleeper"] in top_qbs:
-                            value += qb_premium_setting
-                        if combo[1]["Position"] == "QB" and combo[1]["Player_Sleeper"] in top_qbs:
-                            value += qb_premium_setting
-                        if combo[2]["Position"] == "QB" and combo[2]["Player_Sleeper"] in top_qbs:
-                            value += qb_premium_setting
-                        if one_low <= value <= one_high:
-                            results_3for1.append({
-                                "Player 1": f"{combo[0]['Player_Sleeper']} (KTC: {combo[0]['KTC_Value']})",
-                                "Player 2": f"{combo[1]['Player_Sleeper']} (KTC: {combo[1]['KTC_Value']})",
-                                "Player 3": f"{combo[2]['Player_Sleeper']} (KTC: {combo[2]['KTC_Value']})",
-                                "Total Value": value
-                            })
-                    results_3for1_df = pd.DataFrame(results_3for1)
-                    if not results_3for1_df.empty:
-                        st.dataframe(results_3for1_df.sort_values("Total Value", ascending=False).reset_index(drop=True))
-                    else:
-                        st.write("No 3-for-1 offers found in that range.")
-                    Performance Note
-                    Combinations can get large in deep leagues. If you notice slowdowns, you can:
-                    
-                    Limit to only your top 20 or 30 KTC players for the 3-for-1 search.
-                    
-                    Add a “Max # of suggestions” cutoff.
-                    
-                    Full Example (for “Trade For” Tab, inside your player selection):
-                    python
-                    Copy
-                    Edit
-                    from itertools import combinations
-                    
-                    # ... your 1-for-1 and 2-for-1 code ...
-                    
-                    # 3-for-1 Offers
-                    st.markdown("<h4>3-for-1 Offers:</h4>", unsafe_allow_html=True)
-                    results_3for1 = []
-                    for combo in combinations(my_players_list, 3):
-                        value = combo[0]["KTC_Value"] + combo[1]["KTC_Value"] + combo[2]["KTC_Value"]
                         if combo[0]["Position"] == "QB" and combo[0]["Player_Sleeper"] in top_qbs:
                             value += qb_premium_setting
                         if combo[1]["Position"] == "QB" and combo[1]["Player_Sleeper"] in top_qbs:
