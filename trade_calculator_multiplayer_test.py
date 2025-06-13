@@ -297,9 +297,23 @@ def load_league_data(league_id, ktc_df):
         st.error("Could not load league rosters. League may be private or inaccessible.")
         st.stop()
 
+    # --- Build user_map for both current and previous year
     user_map = {user['user_id']: user['display_name'] for user in users}
-    _, traded_pick_owners = get_all_trades_from_league(league_id)
-    data = []
+    
+    # --- Fetch all trades from this and previous season
+    league_info = requests.get(f"https://api.sleeper.app/v1/league/{league_id}").json()
+    prev_league_id = league_info.get("previous_league_id")
+    all_trades_current, _ = get_all_trades_from_league(league_id)
+    all_trades_prev, _ = get_all_trades_from_league(prev_league_id) if prev_league_id else ([], {})
+    all_trades = all_trades_prev + all_trades_current
+    
+    # --- Merge in previous season user IDs for orphaned teams etc.
+    if prev_league_id:
+        prev_users = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/users").json()
+        user_map.update({user['user_id']: user['display_name'] for user in prev_users})
+    
+    # --- Build pick-to-owner map (latest owner per pick, across both years)
+    pick_to_owner = build_pick_ownership_map(all_trades, user_map)
 
     for roster in rosters:
         roster_id = roster["roster_id"]
@@ -416,8 +430,9 @@ def load_league_data(league_id, ktc_df):
                 roster = next((r for r in rosters if r["roster_id"] == roster_id), None)
                 owner_id = roster.get("owner_id") if roster else None
             
-                # -- PATCH for replaced owners
-                owner_name = traded_pick_owners.get(pick_id)
+                # -- Use new pick owner mapping logic!
+                canonical_key = canonical_pick_name(pick_id)
+                owner_name = pick_to_owner.get(canonical_key)
                 if not owner_name:
                     owner_name = user_map.get(owner_id)
                     if not owner_name:
@@ -449,7 +464,9 @@ def load_league_data(league_id, ktc_df):
                 roster = next((r for r in rosters if r["roster_id"] == roster_id), None)
                 owner_id = roster.get("owner_id") if roster else None
             
-                owner_name = traded_pick_owners.get(pick_id)
+                # -- Use new pick owner mapping logic!
+                canonical_key = canonical_pick_name(pick_id)
+                owner_name = pick_to_owner.get(canonical_key)
                 if not owner_name:
                     owner_name = user_map.get(owner_id)
                     if not owner_name:
@@ -1073,6 +1090,38 @@ def format_pick_id(pid):
             return f"{parts[0]} Pick {parts[2]}.{parts[3]}"
     return pid
 
+# ===============================
+# Helper: Canonicalize pick names
+# ===============================
+def canonical_pick_name(pid):
+    # Matches "2025_pick_1_04" to "2025 Pick 1.04" (same as in your KTC CSV)
+    if pid.startswith("2025_pick_"):
+        parts = pid.split("_")
+        if len(parts) == 4:
+            rd = parts[2]
+            slot = parts[3]
+            return f"2025 Pick {rd}.{slot}"
+    # "2025 1st round pick (Redwards)" or similar — keep as is
+    if pid.startswith("2025") and "round pick" in pid:
+        return pid
+    return pid
+
+# =====================================
+# Helper: Build final pick owner mapping
+# =====================================
+def build_pick_ownership_map(trades, user_map):
+    """
+    Map each traded pick ID (all formats) to its latest owner (display name).
+    """
+    pick_to_owner = {}
+    for trade in trades:
+        adds = trade.get("adds") or {}
+        for pid, roster_id in adds.items():
+            # Only care about picks
+            if "pick" in pid or "Pick" in pid:
+                owner_name = user_map.get(str(roster_id), f"Team {roster_id}")
+                pick_to_owner[canonical_pick_name(pid)] = owner_name
+    return pick_to_owner
 
 def filter_trades_for_player(trades, player_name, player_pool):
     """
