@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import traceback
 from itertools import combinations
 
 DEFAULT_SCORING = {
@@ -901,7 +902,6 @@ if username:
                 except Exception as e:
                     st.error(f"Could not calculate player portfolio: {e}")
 
-    import traceback
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
         st.text(traceback.format_exc())
