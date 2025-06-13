@@ -355,6 +355,28 @@ def build_final_pick_ownership_map(trades, pick_uid_to_orig_owner, user_map):
                 pick_to_owner[uid] = owner_name
     return pick_to_owner
 
+def is_rookie_draft_complete(league_id):
+    """
+    Returns True if the league's rookie draft is marked as complete in Sleeper.
+    """
+    # Get all drafts for this league (could be more than one!)
+    try:
+        drafts = requests.get(f"https://api.sleeper.app/v1/league/{league_id}/drafts").json()
+        # Find the most recent (should be the rookie draft for dynasty leagues)
+        for draft in drafts:
+            # Optional: could check type: if draft.get("type") == "rookie" or "snake"
+            if draft.get("season_type") == "regular":  # usually rookie or startup, but some leagues only run one
+                status = draft.get("status")
+                if status and status.lower() == "complete":
+                    return True
+        # If you want to be stricter, only check first draft:
+        # draft = drafts[0] if drafts else None
+        # if draft and draft.get("status", "").lower() == "complete":
+        #     return True
+    except Exception as e:
+        print("Error checking rookie draft status:", e)
+    return False
+
 # --------------------
 # Sleeper League Loader with KTC Matching
 # --------------------
@@ -442,10 +464,12 @@ def load_league_data(league_id, ktc_df):
         
     is_redraft = str(league_info.get("settings", {}).get("type", "")).lower() not in {"dynasty", "2"}
 
-    # Skip pick logic entirely for redraft leagues
-    if not is_redraft:
-        prev_league_id = league_info.get("previous_league_id")
+    # -- NEW: Check if rookie draft is already complete --
+    rookie_draft_done = is_rookie_draft_complete(league_id)
     
+    # Skip pick logic entirely for redraft leagues or if rookie draft is already done
+    if not is_redraft and not rookie_draft_done:
+        prev_league_id = league_info.get("previous_league_id")
         pick_order = []
         if prev_league_id and not is_redraft:
             prev_rosters = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/rosters").json()
