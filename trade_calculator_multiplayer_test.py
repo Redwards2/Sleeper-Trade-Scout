@@ -248,6 +248,9 @@ def get_all_trades_from_league(league_id):
     while current_league_id and current_league_id not in visited:
         visited.add(current_league_id)
         league_info = requests.get(f"https://api.sleeper.app/v1/league/{current_league_id}").json()
+        if league_info is None or not isinstance(league_info, dict):
+            print(f"Error: Could not fetch league info for league_id={current_league_id}. Response: {league_info}")
+            break  # or return [], {} or handle as needed
         is_redraft = str(league_info.get("settings", {}).get("type", "")).lower() not in {"dynasty", "2"}
         season = league_info.get("season", "?")
 
