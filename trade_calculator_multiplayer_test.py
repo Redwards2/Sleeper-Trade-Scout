@@ -754,7 +754,7 @@ if username:
                     except Exception as trade_error:
                         st.error(f"⚠️ Trade suggestion error: {trade_error}")
 
-        with tabs[1]:  # "Trade For" tab
+        with tabs[1]:
             if not df.empty:
                 st.markdown("<h3 style='text-align:center;'>Trade For a Player</h3>", unsafe_allow_html=True)
                 # Your team owner
@@ -764,10 +764,9 @@ if username:
         
                 # Pool of all players not on your team
                 available_players = df[~df["Player_Sleeper"].isin(my_player_names)].sort_values("KTC_Value", ascending=False)
-                # Only allow non-pick, non-free-agent players
                 available_players = available_players[available_players["Position"] != "PICK"]
         
-                # Build dropdown
+                # Drop-down is built from available_players only (fast)
                 player_options = [
                     f"{row['Player_Sleeper']} ({row['Position']}, {row['Team_Owner']}, KTC: {row['KTC_Value']})"
                     for _, row in available_players.iterrows()
@@ -776,6 +775,8 @@ if username:
                               for _, row in available_players.iterrows()}
         
                 selected_dropdown = st.selectbox("Select a player to trade for:", player_options)
+        
+                # Only do the heavy calculation AFTER a player is selected!
                 if selected_dropdown:
                     target_row = player_map[selected_dropdown]
                     target_name = target_row["Player_Sleeper"]
@@ -783,7 +784,12 @@ if username:
                     target_ktc = target_row["KTC_Value"]
                     target_id = target_row["Sleeper_Player_ID"]
         
-                    # Headshot
+                    # Apply package bonus to the *target*, not to your own side!
+                    target_adjusted_value = target_ktc + package_bonus([target_ktc])
+                    one_low = int(target_adjusted_value * (1 - tolerance / 100))
+                    one_high = int(target_adjusted_value * (1 + tolerance / 100))
+        
+                    # Show interface
                     img_col, val_col = st.columns([1, 2], gap="large")
                     with img_col:
                         headshot_url = f"https://sleepercdn.com/content/nfl/players/{target_id}.jpg"
@@ -799,15 +805,15 @@ if username:
                     with val_col:
                         st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
                         st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Raw KTC Value:</strong> {target_ktc}</li>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Package Bonus:</strong> +{package_bonus([target_ktc])}</li>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Adjusted Trade Value:</strong> {target_adjusted_value}</li>", unsafe_allow_html=True)
                         st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Owner:</strong> {target_owner}</li></ul>", unsafe_allow_html=True)
         
-                    # Now suggest possible player(s) from YOUR team whose sum of KTC matches (within tolerance)
+                    # Only compute suggestions after player is selected (for lazy load)
                     possible_players = my_roster.sort_values("KTC_Value", ascending=False)
                     my_players_list = possible_players[["Player_Sleeper", "KTC_Value", "Position", "Team"]].to_dict(orient="records")
         
-                    # 1-for-1 suggestion
-                    one_low = int(target_ktc * (1 - tolerance / 100))
-                    one_high = int(target_ktc * (1 + tolerance / 100))
+                    # 1-for-1 suggestion (no package bonus applied to your side!)
                     one_for_one = possible_players[
                         (possible_players["KTC_Value"] >= one_low) & (possible_players["KTC_Value"] <= one_high)
                     ]
@@ -818,22 +824,20 @@ if username:
                     else:
                         st.write("No single-player offers found in that range.")
         
-                    # 2-for-1 suggestion
+                    # 2-for-1 suggestion (again, no package bonus applied to your side!)
                     st.markdown("<h4>2-for-1 Offers:</h4>", unsafe_allow_html=True)
                     from itertools import combinations
                     results = []
                     for combo in combinations(my_players_list, 2):
                         value = combo[0]["KTC_Value"] + combo[1]["KTC_Value"]
-                        bonus = package_bonus([combo[0]["KTC_Value"], combo[1]["KTC_Value"]])
-                        total_value = value + bonus
-                        if one_low <= total_value <= one_high:
+                        if one_low <= value <= one_high:
                             results.append({
                                 "Player 1": f"{combo[0]['Player_Sleeper']} (KTC: {combo[0]['KTC_Value']})",
                                 "Player 2": f"{combo[1]['Player_Sleeper']} (KTC: {combo[1]['KTC_Value']})",
-                                "Total Value (with bonus)": total_value
+                                "Total Value": value
                             })
                     if results:
-                        st.dataframe(pd.DataFrame(results).sort_values("Total Value (with bonus)", ascending=False).reset_index(drop=True))
+                        st.dataframe(pd.DataFrame(results).sort_values("Total Value", ascending=False).reset_index(drop=True))
                     else:
                         st.write("No 2-for-1 offers found in that range.")
         
