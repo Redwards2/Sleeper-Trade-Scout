@@ -608,7 +608,7 @@ if username:
         # ===================
         # Tab Layout
         # ===================
-        tabs = st.tabs(["Trade Tool", "League Breakdown", "Player Portfolio"])
+        tabs = st.tabs(["Trade Away", "Trade For", "League Breakdown", "Player Portfolio"])
         
         with tabs[0]:  # Main trade tool as before!
             if not df.empty:
@@ -753,8 +753,91 @@ if username:
                                 st.write("No 2-for-1 trades found in that range.")
                     except Exception as trade_error:
                         st.error(f"⚠️ Trade suggestion error: {trade_error}")
+
+        with tabs[1]:  # "Trade For" tab
+            if not df.empty:
+                st.markdown("<h3 style='text-align:center;'>Trade For a Player</h3>", unsafe_allow_html=True)
+                # Your team owner
+                my_team_owner = username_lower
+                my_roster = df[df["Team_Owner"].str.lower() == my_team_owner]
+                my_player_names = set(my_roster["Player_Sleeper"])
         
-        with tabs[1]:
+                # Pool of all players not on your team
+                available_players = df[~df["Player_Sleeper"].isin(my_player_names)].sort_values("KTC_Value", ascending=False)
+                # Only allow non-pick, non-free-agent players
+                available_players = available_players[available_players["Position"] != "PICK"]
+        
+                # Build dropdown
+                player_options = [
+                    f"{row['Player_Sleeper']} ({row['Position']}, {row['Team_Owner']}, KTC: {row['KTC_Value']})"
+                    for _, row in available_players.iterrows()
+                ]
+                player_map = {f"{row['Player_Sleeper']} ({row['Position']}, {row['Team_Owner']}, KTC: {row['KTC_Value']})": row
+                              for _, row in available_players.iterrows()}
+        
+                selected_dropdown = st.selectbox("Select a player to trade for:", player_options)
+                if selected_dropdown:
+                    target_row = player_map[selected_dropdown]
+                    target_name = target_row["Player_Sleeper"]
+                    target_owner = target_row["Team_Owner"]
+                    target_ktc = target_row["KTC_Value"]
+                    target_id = target_row["Sleeper_Player_ID"]
+        
+                    # Headshot
+                    img_col, val_col = st.columns([1, 2], gap="large")
+                    with img_col:
+                        headshot_url = f"https://sleepercdn.com/content/nfl/players/{target_id}.jpg"
+                        st.markdown(
+                            f"""
+                            <div style='display: flex; flex-direction: column; align-items: center; margin-bottom: 16px;'>
+                                <img src="{headshot_url}" width="120" style="display:block; margin: 0 auto; border-radius:12px;">
+                                <div style='text-align: center; font-size: 15px; color: #fff; margin-top: 8px;'>{target_name}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    with val_col:
+                        st.markdown("<h3 style='text-align:center;'>Selected Player Package</h3>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Raw KTC Value:</strong> {target_ktc}</li>", unsafe_allow_html=True)
+                        st.markdown(f"<ul style='text-align:center; list-style-position: inside;'><strong>Owner:</strong> {target_owner}</li></ul>", unsafe_allow_html=True)
+        
+                    # Now suggest possible player(s) from YOUR team whose sum of KTC matches (within tolerance)
+                    possible_players = my_roster.sort_values("KTC_Value", ascending=False)
+                    my_players_list = possible_players[["Player_Sleeper", "KTC_Value", "Position", "Team"]].to_dict(orient="records")
+        
+                    # 1-for-1 suggestion
+                    one_low = int(target_ktc * (1 - tolerance / 100))
+                    one_high = int(target_ktc * (1 + tolerance / 100))
+                    one_for_one = possible_players[
+                        (possible_players["KTC_Value"] >= one_low) & (possible_players["KTC_Value"] <= one_high)
+                    ]
+        
+                    st.markdown("<h4>1-for-1 Offers:</h4>", unsafe_allow_html=True)
+                    if not one_for_one.empty:
+                        st.dataframe(one_for_one[["Player_Sleeper", "Position", "KTC_Value"]].reset_index(drop=True))
+                    else:
+                        st.write("No single-player offers found in that range.")
+        
+                    # 2-for-1 suggestion
+                    st.markdown("<h4>2-for-1 Offers:</h4>", unsafe_allow_html=True)
+                    from itertools import combinations
+                    results = []
+                    for combo in combinations(my_players_list, 2):
+                        value = combo[0]["KTC_Value"] + combo[1]["KTC_Value"]
+                        bonus = package_bonus([combo[0]["KTC_Value"], combo[1]["KTC_Value"]])
+                        total_value = value + bonus
+                        if one_low <= total_value <= one_high:
+                            results.append({
+                                "Player 1": f"{combo[0]['Player_Sleeper']} (KTC: {combo[0]['KTC_Value']})",
+                                "Player 2": f"{combo[1]['Player_Sleeper']} (KTC: {combo[1]['KTC_Value']})",
+                                "Total Value (with bonus)": total_value
+                            })
+                    if results:
+                        st.dataframe(pd.DataFrame(results).sort_values("Total Value (with bonus)", ascending=False).reset_index(drop=True))
+                    else:
+                        st.write("No 2-for-1 offers found in that range.")
+        
+        with tabs[2]:
             with st.spinner("Calculating League Statistics..."):
                 import time
         
@@ -813,7 +896,7 @@ if username:
                 table_height = max(400, 40 * len(league_breakdown_df) + 60)
                 st.dataframe(league_breakdown_df, use_container_width=True, height=table_height)
 
-        with tabs[2]:
+        with tabs[3]:
             with st.spinner("Calculating Player Ownership..."):
                 # Get all owners in the current league
                 league_users_url = f"https://api.sleeper.app/v1/league/{league_id}/users"
