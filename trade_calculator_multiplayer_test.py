@@ -901,8 +901,11 @@ if username:
                 except Exception as e:
                     st.error(f"Could not calculate player portfolio: {e}")
 
+    import traceback
     except Exception as e:
         st.error(f"⚠️ Something went wrong: {e}")
+        st.text(traceback.format_exc())
+        
 else:
     st.info("Enter your Sleeper username to get started.")
 
