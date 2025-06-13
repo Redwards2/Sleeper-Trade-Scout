@@ -320,6 +320,58 @@ def build_pick_ownership_map(trades, user_map):
                 pick_to_owner[canonical_pick_name(pid)] = owner_name
     return pick_to_owner
 
+ef all_equiv_pick_ids(uid, orig_owner):
+    """
+    For a slot UID like '2025_pick_1_04' and owner 'Redwards',
+    return all possible trade IDs for that pick (Sleeper and owner placeholder formats).
+    """
+    num = uid.split("_")[-1]
+    rd = uid.split("_")[2]
+    ktc_fmt = f"2025 Pick {rd}.{num}"
+    sleeper_fmt = uid
+    owner_fmt = f"2025 1st round pick ({orig_owner})"
+    return {sleeper_fmt, ktc_fmt, owner_fmt}
+
+def build_pick_uid_to_orig_owner(pick_order, rosters, user_map):
+    """
+    Returns a dict: pick_uid -> original owner display name, for all round 1 and 2 picks.
+    """
+    pick_uid_to_orig_owner = {}
+    for idx, roster_id in enumerate(pick_order):
+        pick_num = idx + 1
+        # 1st round
+        pick_id_1 = f"2025_pick_1_{str(pick_num).zfill(2)}"
+        owner_id = next((r["owner_id"] for r in rosters if r["roster_id"] == roster_id), None)
+        owner_name = user_map.get(owner_id, f"Team {roster_id}")
+        pick_uid_to_orig_owner[pick_id_1] = owner_name
+        # 2nd round
+        pick_id_2 = f"2025_pick_2_{str(pick_num).zfill(2)}"
+        pick_uid_to_orig_owner[pick_id_2] = owner_name
+    return pick_uid_to_orig_owner
+
+def build_final_pick_ownership_map(trades, pick_uid_to_orig_owner, user_map):
+    """
+    Returns: pick_uid -> current owner display name.
+    Handles all alternate ID formats from trade history.
+    """
+    # Start with original slot assignment
+    pick_to_owner = pick_uid_to_orig_owner.copy()
+    # Map all alternate IDs to pick_uid
+    alt_id_to_uid = {}
+    for uid, orig_owner in pick_uid_to_orig_owner.items():
+        for alt_id in all_equiv_pick_ids(uid, orig_owner):
+            alt_id_to_uid[alt_id] = uid
+    # Step through trades chronologically, update mapping
+    for trade in trades:
+        adds = trade.get("adds", {}) or {}
+        for pid, roster_id in adds.items():
+            uid = alt_id_to_uid.get(pid)
+            if uid:
+                # roster_id may be int or str, but user_map keys are user_id (string)
+                owner_name = user_map.get(str(roster_id), f"Team {roster_id}")
+                pick_to_owner[uid] = owner_name
+    return pick_to_owner
+
 # --------------------
 # Sleeper League Loader with KTC Matching
 # --------------------
@@ -465,74 +517,34 @@ def load_league_data(league_id, ktc_df):
             # === 5. Final pick order for both rounds: 1.01–1.06 = worst non-playoff, 1.07–1.12 = playoff
             pick_order = [r.get("roster_id") for r in non_playoff_sorted[:6]] + playoff_picks
             
-            # === 6. Assign 2025 Round 1 Picks
-            for idx, roster_id in enumerate(pick_order):
-                pick_num = idx + 1  # 1-based (1.01, 1.02, etc.)
-                pick_name = f"2025 Pick 1.{str(pick_num).zfill(2)}"
-                pick_id = f"2025_pick_1_{str(pick_num).zfill(2)}"
+            # Build mapping: pick_uid -> original owner
+            pick_uid_to_orig_owner = build_pick_uid_to_orig_owner(pick_order, rosters, user_map)
             
-                # Find owner_id for the roster
-                roster = next((r for r in rosters if r["roster_id"] == roster_id), None)
-                owner_id = roster.get("owner_id") if roster else None
+            # Get all trades from previous and current seasons, in order
+            all_trades_current, _ = get_all_trades_from_league(league_id)
+            all_trades_prev, _ = get_all_trades_from_league(prev_league_id) if prev_league_id else ([], {})
+            all_trades = all_trades_prev + all_trades_current
             
-                # -- Use new pick owner mapping logic!
-                canonical_key = canonical_pick_name(pick_id)
-                owner_name = pick_to_owner.get(canonical_key)
-                if not owner_name:
-                    owner_name = user_map.get(owner_id)
-                    if not owner_name:
-                        replacement = next(
-                            (u['display_name'] for u in users if str(u.get('user_id')) == str(owner_id) or str(u.get('user_id')) == str(roster_id)),
-                            None
-                        )
-                        owner_name = replacement if replacement else f"Team {roster_id}"
+            # Build pick_uid -> current owner mapping
+            pick_to_owner = build_final_pick_ownership_map(all_trades, pick_uid_to_orig_owner, user_map)
             
-                ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
+            # Add 1st and 2nd round picks to the data table
+            for uid, orig_owner in pick_uid_to_orig_owner.items():
+                # Display name: "2025 Pick 1.01 (Mahomeboy93)"
+                display = f"{format_pick_id(uid)} ({orig_owner})"
+                ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == format_pick_id(uid).lower()]
                 ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-            
+                final_owner = pick_to_owner.get(uid, orig_owner)
                 data.append({
-                    "Sleeper_Player_ID": pick_id,
-                    "Player_Sleeper": pick_name,
+                    "Sleeper_Player_ID": uid,
+                    "Player_Sleeper": display,
                     "Position": "PICK",
                     "Team": "",
-                    "Team_Owner": owner_name,
-                    "Roster_ID": roster_id,
+                    "Team_Owner": final_owner,
+                    "Roster_ID": None,
                     "KTC_Value": ktc_value
                 })
-            
-            # === 7. Assign 2025 Round 2 Picks (exact same order as round 1)
-            for idx, roster_id in enumerate(pick_order):
-                pick_num = idx + 1
-                pick_name = f"2025 Pick 2.{str(pick_num).zfill(2)}"
-                pick_id = f"2025_pick_2_{str(pick_num).zfill(2)}"
-            
-                roster = next((r for r in rosters if r["roster_id"] == roster_id), None)
-                owner_id = roster.get("owner_id") if roster else None
-            
-                # -- Use new pick owner mapping logic!
-                canonical_key = canonical_pick_name(pick_id)
-                owner_name = pick_to_owner.get(canonical_key)
-                if not owner_name:
-                    owner_name = user_map.get(owner_id)
-                    if not owner_name:
-                        replacement = next(
-                            (u['display_name'] for u in users if str(u.get('user_id')) == str(owner_id) or str(u.get('user_id')) == str(roster_id)),
-                            None
-                        )
-                        owner_name = replacement if replacement else f"Team {roster_id}"
-            
-                ktc_row = ktc_df[ktc_df["Player_Sleeper"].str.strip().str.lower() == pick_name.lower()]
-                ktc_value = int(ktc_row["KTC_Value"].iloc[0]) if not ktc_row.empty else 0
-            
-                data.append({
-                    "Sleeper_Player_ID": pick_id,
-                    "Player_Sleeper": pick_name,
-                    "Position": "PICK",
-                    "Team": "",
-                    "Team_Owner": owner_name,
-                    "Roster_ID": roster_id,
-                    "KTC_Value": ktc_value
-                })
+                
     return pd.DataFrame(data), player_pool
 
 # --------------------
