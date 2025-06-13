@@ -752,10 +752,12 @@ if username:
                         st.markdown(f"<h4 style='color:#4da6ff;'>{pos}</h4>", unsafe_allow_html=True)
                         pos_df = pos_ranks[pos]["top_players"]
                         for _, row in pos_df.iterrows():
+                            pid = str(row["Sleeper_Player_ID"])
                             val = int(row["KTC_Value"])
-                            color = "#44c553" if val >= 4000 else "#ff6f61" if val < 2000 else "#ccc"
+                            # Green if this player is a starter, else light gray
+                            color = "#44c553" if pid in starters_list else "#f5f6fa"
                             st.markdown(
-                                f"<div style='font-size:17px;color:{color};font-weight:600'>{row['Player_Sleeper']} <span style='float:right;'>{val:,}</span></div>",
+                                f"<div style='font-size:17px;color:{color};font-weight:600'>{row['Player_Sleeper']} <span style='float:right;color:#aaa'>{val:,}</span></div>",
                                 unsafe_allow_html=True
                             )
         
@@ -910,6 +912,7 @@ if username:
                 # Your team owner
                 my_team_owner = username_lower
                 my_roster = df[df["Team_Owner"].str.lower() == my_team_owner]
+                starters_list = set(my_roster.get("starters", [])) if my_roster else set()
                 my_player_names = set(my_roster["Player_Sleeper"])
         
                 # Pool of all players not on your team
