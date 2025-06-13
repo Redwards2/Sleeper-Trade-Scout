@@ -654,8 +654,6 @@ if username:
 
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
         df, player_pool = load_league_data(league_id, ktc_df)
-        with st.expander("🧪 DEBUG: All Picks Pulled", expanded=False):
-            st.dataframe(df[df["Position"] == "PICK"])
             
          # Sidebar: List custom scoring settings
         non_default_settings = []
@@ -686,9 +684,10 @@ if username:
         # ===================
         # Tab Layout
         # ===================
-        tabs = st.tabs(["Trade Away", "Trade For", "League Breakdown", "Player Portfolio"])
+        tab_names = ["Trade Away", "Trade For", "League Breakdown", "Player Portfolio"]
+        active_tab = st.radio("Go to:", tab_names, index=0, horizontal=True, key="tab_picker")
         
-        with tabs[0]:  # Main trade tool as before!
+        if active_tab == "Trade Away":  # Main trade tool as before!
             if not df.empty:
                 top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
         
@@ -832,7 +831,7 @@ if username:
                     except Exception as trade_error:
                         st.error(f"⚠️ Trade suggestion error: {trade_error}")
 
-        with tabs[1]:
+        elif active_tab == "Trade For":
             if not df.empty:
                 st.markdown("<h3 style='text-align:center;'>Trade For a Player</h3>", unsafe_allow_html=True)
                 # Your team owner
@@ -958,7 +957,7 @@ if username:
                     else:
                         st.write("No 3-for-1 offers found in that range.")
         
-        with tabs[2]:
+        elif active_tab == "League Breakdown":
             with st.spinner("Calculating League Statistics..."):
                 import time
         
@@ -1017,7 +1016,7 @@ if username:
                 table_height = max(400, 40 * len(league_breakdown_df) + 60)
                 st.dataframe(league_breakdown_df, use_container_width=True, height=table_height)
 
-        with tabs[3]:
+        elif active_tab == "Player Portfolio":
             with st.spinner("Calculating Player Ownership..."):
                 # Get all owners in the current league
                 league_users_url = f"https://api.sleeper.app/v1/league/{league_id}/users"
@@ -1029,18 +1028,48 @@ if username:
                 selected_owner = st.selectbox("Select Owner for Player Portfolio", owner_names)
                 selected_owner_id = owner_display_map[selected_owner]
             
-                # Optional: add league format filter
-                filter_option = st.selectbox(
+                # --- Build counts for each format ---
+                format_types = [
+                    "Dynasty Lineup",
+                    "Dynasty Best Ball",
+                    "Redraft Lineup",
+                    "Redraft Best Ball"
+                ]
+                format_counts = {ftype: 0 for ftype in format_types}
+                
+                for league in leagues_for_owner:
+                    lg_type = str(league.get('settings', {}).get('type', '')).lower()
+                    is_dynasty = (lg_type == "dynasty" or lg_type == "2" or "dynasty" in league.get('name', '').lower())
+                    is_bestball = league.get("settings", {}).get("best_ball", 0) == 1
+                
+                    if is_dynasty and is_bestball:
+                        format_counts["Dynasty Best Ball"] += 1
+                    elif is_dynasty and not is_bestball:
+                        format_counts["Dynasty Lineup"] += 1
+                    elif not is_dynasty and is_bestball:
+                        format_counts["Redraft Best Ball"] += 1
+                    elif not is_dynasty and not is_bestball:
+                        format_counts["Redraft Lineup"] += 1
+                
+                format_counts["All"] = sum(format_counts.values())
+                
+                # --- Build options with counts ---
+                filter_options = [
+                    f"All ({format_counts['All']})",
+                    f"Dynasty Lineup ({format_counts['Dynasty Lineup']})",
+                    f"Dynasty Best Ball ({format_counts['Dynasty Best Ball']})",
+                    f"Redraft Lineup ({format_counts['Redraft Lineup']})",
+                    f"Redraft Best Ball ({format_counts['Redraft Best Ball']})"
+                ]
+                
+                selected_filter = st.selectbox(
                     "Filter Leagues By Type/Format:",
-                    [
-                        "All",
-                        "Dynasty Lineup",
-                        "Dynasty Best Ball",
-                        "Redraft Lineup",
-                        "Redraft Best Ball"
-                    ],
+                    filter_options,
                     index=0
                 )
+                
+                # Use just the type for your filter logic
+                filter_option = selected_filter.split(' (')[0]
             
                 def league_matches_filter(league, option):
                     lg_type = str(league.get('settings', {}).get('type', '')).lower()
