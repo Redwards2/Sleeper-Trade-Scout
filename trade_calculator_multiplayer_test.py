@@ -727,14 +727,6 @@ if username:
         
                 # Picks
                 picks_df = team_df[team_df["Position"] == "PICK"].sort_values("Player_Sleeper")
-        
-                # --- Layout ---
-                # --- Find the user's roster to get their team name (leave variable names as is if they match) ---
-                my_roster = next((r for r in rosters if r.get("owner_id") == user_id), None)
-                if my_roster:
-                    team_name = my_roster.get("settings", {}).get("team_name", "No Team Name")
-                else:
-                    team_name = "No Team Name"
                 
                 # --- Show the team avatar, league name, league type, owner, and team name ---
                 st.markdown(
