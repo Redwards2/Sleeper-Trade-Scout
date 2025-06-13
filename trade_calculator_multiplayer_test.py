@@ -685,7 +685,7 @@ if username:
         # ===================
         # Tab Layout
         # ===================
-        tab_names = ["Trade Away", "Trade For", "League Breakdown", "Player Portfolio"]
+        tab_names = ["Roster Overview", "Trade Away", "Trade For", "League Breakdown", "Player Portfolio"]
         active_tab = st.radio("Go to:", tab_names, index=0, horizontal=True, key="tab_picker")
         
         if active_tab == "Roster Overview":
