@@ -1027,7 +1027,9 @@ if username:
                             })
                     results_3for1_df = pd.DataFrame(results_3for1)
                     if not results_3for1_df.empty:
-                        st.dataframe(results_3for1_df.sort_values("Total Value", ascending=False).reset_index(drop=True))
+                        # Sort and limit to top 25 offers
+                        results_3for1_df = results_3for1_df.sort_values("Total Value", ascending=False).reset_index(drop=True).head(25)
+                        st.dataframe(results_3for1_df)
                     else:
                         st.write("No 3-for-1 offers found in that range.")
         
