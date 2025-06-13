@@ -713,21 +713,30 @@ if username:
                     pos_ranks[pos] = {
                         "count": len(pos_df),
                         "value": pos_df["KTC_Value"].sum(),
-                        "top_players": pos_df.sort_values("KTC_Value", ascending=False).head(6)
+                        "top_players": pos_df.sort_values("KTC_Value", ascending=False)
                     }
         
                 # Picks
                 picks_df = team_df[team_df["Position"] == "PICK"].sort_values("Player_Sleeper")
         
                 # --- Layout ---
+                # --- Find the user's roster to get their team name (leave variable names as is if they match) ---
+                my_roster = next((r for r in rosters if r.get("owner_id") == user_id), None)
+                if my_roster:
+                    team_name = my_roster.get("settings", {}).get("team_name", "No Team Name")
+                else:
+                    team_name = "No Team Name"
+                
+                # --- Show the team avatar, league name, league type, owner, and team name ---
                 st.markdown(
                     f"""
                     <div style="display:flex;align-items:center;gap:30px;">
                         <img src="{team_avatar_url}" width="80" style="border-radius:50%;">
                         <div>
                             <h2 style="margin-bottom:0;">{selected_league_name}</h2>
+                            <div style='color:#bfbfbf; font-size:16px; margin-bottom:4px;'>{league_desc}</div>
                             <div style='color:#aaa;'>Owner: {username}</div>
-                            <div style='font-size:20px;font-weight:700;color:#fff;'>Team: {selected_league_name}</div>
+                            <div style='font-size:20px;font-weight:700;color:#fff;'>Team: {team_name}</div>
                         </div>
                     </div>
                     """, unsafe_allow_html=True
