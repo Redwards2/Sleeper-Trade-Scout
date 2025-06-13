@@ -390,9 +390,6 @@ def load_league_data(league_id, ktc_df):
         prev_users = requests.get(f"https://api.sleeper.app/v1/league/{prev_league_id}/users").json()
         user_map.update({user['user_id']: user['display_name'] for user in prev_users})
     
-    # --- Build pick-to-owner map (latest owner per pick, across both years)
-    pick_to_owner = build_pick_ownership_map(all_trades, user_map)
-
     data = []
     
     for roster in rosters:
