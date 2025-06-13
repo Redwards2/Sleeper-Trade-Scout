@@ -1098,9 +1098,16 @@ if username:
                 league_users = requests.get(league_users_url).json()
                 owner_display_map = {u['display_name']: u['user_id'] for u in league_users}
                 owner_names = list(owner_display_map.keys())
-            
-                # Dropdown to select which owner's portfolio to view
-                selected_owner = st.selectbox("Select Owner for Player Portfolio", owner_names)
+                
+                username_display = username  # (from the sidebar input)
+                default_index = 0  # Fallback: first owner in the list
+                
+                for i, name in enumerate(owner_names):
+                    if name.strip().lower() == username_display.strip().lower():
+                        default_index = i
+                        break
+                
+                selected_owner = st.selectbox("Select Owner for Player Portfolio", owner_names, index=default_index)
                 selected_owner_id = owner_display_map[selected_owner]
             
                 # Fetch all of the selected owner's leagues (2025)
