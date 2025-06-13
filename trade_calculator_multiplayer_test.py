@@ -387,8 +387,17 @@ def load_league_data(league_id, ktc_df):
     player_pool = pool_response.json()
 
     users_url = f"https://api.sleeper.app/v1/league/{league_id}/users"
-    rosters_url = f"https://api.sleeper.app/v1/league/{league_id}/rosters"
     users = requests.get(users_url).json()
+    
+    rosters_url = f"https://api.sleeper.app/v1/league/{league_id}/rosters"
+    rosters = requests.get(rosters_url).json()
+
+    my_roster = next((r for r in rosters if str(r.get("owner_id")) == str(user_id)), None)
+    if my_roster:
+        team_name = my_roster.get("settings", {}).get("team_name", "No Team Name")
+    else:
+        team_name = "No Team Name"
+    
     if users is None or not isinstance(users, list):
         st.error("Could not load league users. League may be private or inaccessible.")
         st.stop()
