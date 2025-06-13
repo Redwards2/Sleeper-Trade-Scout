@@ -391,8 +391,6 @@ def load_league_data(league_id, ktc_df):
     
     rosters_url = f"https://api.sleeper.app/v1/league/{league_id}/rosters"
     rosters = requests.get(rosters_url).json()
-    my_roster = next((r for r in rosters if str(r.get("owner_id")) == str(user_id)), None)
-    st.write("DEBUG - my_roster:", my_roster)
 
     my_roster = next((r for r in rosters if str(r.get("owner_id")) == str(user_id)), None)
     if my_roster:
