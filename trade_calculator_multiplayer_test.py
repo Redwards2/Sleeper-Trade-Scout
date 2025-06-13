@@ -563,7 +563,7 @@ def load_league_data(league_id, ktc_df):
                     "KTC_Value": ktc_value
                 })
                 
-    return pd.DataFrame(data), player_pool
+    return pd.DataFrame(data), player_pool, starters_list
 
 # --------------------
 # Streamlit UI Setup
@@ -669,7 +669,7 @@ if username:
         st.sidebar.markdown(f"<div style='font-size:16px; font-weight:600; color:#4da6ff; text-align:center;'>{league_desc}</div>", unsafe_allow_html=True)
 
         ktc_df = pd.read_csv("ktc_values.csv", encoding="utf-8-sig")
-        df, player_pool = load_league_data(league_id, ktc_df)
+        df, player_pool, starters_list = load_league_data(league_id, ktc_df)
             
          # Sidebar: List custom scoring settings
         non_default_settings = []
