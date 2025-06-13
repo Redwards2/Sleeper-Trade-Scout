@@ -833,6 +833,7 @@ if username:
 
         elif active_tab == "Trade For":
             if not df.empty:
+                top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
                 st.markdown("<h3 style='text-align:center;'>Trade For a Player</h3>", unsafe_allow_html=True)
                 # Your team owner
                 my_team_owner = username_lower
@@ -1028,6 +1029,10 @@ if username:
                 selected_owner = st.selectbox("Select Owner for Player Portfolio", owner_names)
                 selected_owner_id = owner_display_map[selected_owner]
             
+                # Fetch all of the selected owner's leagues (2025)
+                owner_leagues_url = f"https://api.sleeper.app/v1/user/{selected_owner_id}/leagues/nfl/2025"
+                leagues_for_owner = requests.get(owner_leagues_url).json()
+               
                 # --- Build counts for each format ---
                 format_types = [
                     "Dynasty Lineup",
@@ -1089,9 +1094,6 @@ if username:
                     return True
             
                 try:
-                    # Fetch all of the selected owner's leagues (2025)
-                    owner_leagues_url = f"https://api.sleeper.app/v1/user/{selected_owner_id}/leagues/nfl/2025"
-                    leagues_for_owner = requests.get(owner_leagues_url).json()
                     filtered_leagues = [league for league in leagues_for_owner if league_matches_filter(league, filter_option)]
                     total_leagues = len(filtered_leagues)
                     player_counts = {}
