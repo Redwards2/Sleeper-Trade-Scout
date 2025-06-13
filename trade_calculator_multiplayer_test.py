@@ -911,7 +911,6 @@ if username:
                 # Your team owner
                 my_team_owner = username_lower
                 my_roster = df[df["Team_Owner"].str.lower() == my_team_owner]
-                starters_list = set(my_roster.get("starters", [])) if my_roster else set()
                 my_player_names = set(my_roster["Player_Sleeper"])
         
                 # Pool of all players not on your team
