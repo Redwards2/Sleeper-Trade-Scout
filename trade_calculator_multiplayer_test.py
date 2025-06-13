@@ -576,6 +576,8 @@ if username:
         user_response = requests.get(user_info_url, timeout=10)
         user_response.raise_for_status()
         user_id = user_response.json().get("user_id")
+        user_info = user_response.json()
+        user_avatar = user_info.get("avatar")
 
         leagues_url = f"https://api.sleeper.app/v1/user/{user_id}/leagues/nfl/2025"
         response = requests.get(leagues_url)
@@ -694,7 +696,10 @@ if username:
                 team_df = df[df["Team_Owner"].str.lower() == username_lower]
         
                 # Get avatar (use a generic if missing)
-                team_avatar_url = f"https://sleepercdn.com/avatars/thumbs/{user_id}"  # May need adjusting
+                if user_avatar:
+                    team_avatar_url = f"https://sleepercdn.com/avatars/{user_avatar}"
+                else:
+                    team_avatar_url = "https://sleepercdn.com/images/logos/logo.png"  # fallback generic
                 team_name = selected_league_name
                 owner_name = username
                 avg_age = team_df[team_df["Position"].isin(["QB", "RB", "WR", "TE"])]["KTC_Value"].mean()
@@ -720,19 +725,10 @@ if username:
                     <div style="display:flex;align-items:center;gap:30px;">
                         <img src="{team_avatar_url}" width="80" style="border-radius:50%;">
                         <div>
-                            <h2 style="margin-bottom:0;">{team_name}</h2>
-                            <span style="color: #aaa;">Owner: {owner_name}</span>
+                            <h2 style="margin-bottom:0;">{selected_league_name}</h2>
+                            <div style='color:#aaa;'>Owner: {username}</div>
+                            <div style='font-size:20px;font-weight:700;color:#fff;'>Team: {selected_league_name}</div>
                         </div>
-                    </div>
-                    """, unsafe_allow_html=True
-                )
-                st.markdown(
-                    f"""
-                    <div style="margin-top:20px;margin-bottom:15px;">
-                        <span style="background:#ffe066;color:#b38800;font-weight:bold;border-radius:5px;padding:3px 10px;">Contender</span>
-                        &nbsp;&nbsp; 
-                        <span style="color:#4da6ff;font-weight:600;">Total Value:</span> {total_value:,} | 
-                        <span style="color:#7f8c8d;">Avg Age:</span> {avg_age:.1f}
                     </div>
                     """, unsafe_allow_html=True
                 )
@@ -750,19 +746,6 @@ if username:
                                 f"<div style='font-size:17px;color:{color};font-weight:600'>{row['Player_Sleeper']} <span style='float:right;'>{val:,}</span></div>",
                                 unsafe_allow_html=True
                             )
-        
-                # Draft Picks
-                with st.expander("Draft Picks", expanded=True):
-                    if not picks_df.empty:
-                        for _, pick in picks_df.iterrows():
-                            val = pick["KTC_Value"]
-                            pick_str = pick["Player_Sleeper"]
-                            st.markdown(
-                                f"<div style='font-size:15px;color:#7f8c8d;font-weight:600'>{pick_str} <span style='float:right;color:#4da6ff;'>{val:,}</span></div>",
-                                unsafe_allow_html=True
-                            )
-                    else:
-                        st.markdown("<span style='color:#aaa;'>No picks</span>", unsafe_allow_html=True)
         
         elif active_tab == "Trade Away":  # Main trade tool as before!
             if not df.empty:
