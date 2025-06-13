@@ -303,24 +303,7 @@ def canonical_pick_name(pid):
         return pid
     return pid
 
-# =====================================
-# Helper: Build final pick owner mapping
-# =====================================
-def build_pick_ownership_map(trades, user_map):
-    """
-    Map each traded pick ID (all formats) to its latest owner (display name).
-    """
-    pick_to_owner = {}
-    for trade in trades:
-        adds = trade.get("adds") or {}
-        for pid, roster_id in adds.items():
-            # Only care about picks
-            if "pick" in pid or "Pick" in pid:
-                owner_name = user_map.get(str(roster_id), f"Team {roster_id}")
-                pick_to_owner[canonical_pick_name(pid)] = owner_name
-    return pick_to_owner
-
-ef all_equiv_pick_ids(uid, orig_owner):
+def all_equiv_pick_ids(uid, orig_owner):
     """
     For a slot UID like '2025_pick_1_04' and owner 'Redwards',
     return all possible trade IDs for that pick (Sleeper and owner placeholder formats).
