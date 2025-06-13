@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import traceback
 from itertools import combinations
+import streamlit as st
 
 DEFAULT_SCORING = {
     "rec": 1.0,              # PPR
@@ -687,7 +688,83 @@ if username:
         tab_names = ["Trade Away", "Trade For", "League Breakdown", "Player Portfolio"]
         active_tab = st.radio("Go to:", tab_names, index=0, horizontal=True, key="tab_picker")
         
-        if active_tab == "Trade Away":  # Main trade tool as before!
+        if active_tab == "Roster Overview":
+            if not df.empty:
+                # Filter to user's team
+                team_df = df[df["Team_Owner"].str.lower() == username_lower]
+        
+                # Get avatar (use a generic if missing)
+                team_avatar_url = f"https://sleepercdn.com/avatars/thumbs/{user_id}"  # May need adjusting
+                team_name = selected_league_name
+                owner_name = username
+                avg_age = team_df[team_df["Position"].isin(["QB", "RB", "WR", "TE"])]["KTC_Value"].mean()
+                total_value = team_df["KTC_Value"].sum()
+                starter_value = team_df[team_df["Position"].isin(["QB", "RB", "WR", "TE"])]["KTC_Value"].sum()
+        
+                # Ranks by position (optional)
+                pos_ranks = {}
+                for pos in ["QB", "RB", "WR", "TE"]:
+                    pos_df = team_df[team_df["Position"] == pos]
+                    pos_ranks[pos] = {
+                        "count": len(pos_df),
+                        "value": pos_df["KTC_Value"].sum(),
+                        "top_players": pos_df.sort_values("KTC_Value", ascending=False).head(6)
+                    }
+        
+                # Picks
+                picks_df = team_df[team_df["Position"] == "PICK"].sort_values("Player_Sleeper")
+        
+                # --- Layout ---
+                st.markdown(
+                    f"""
+                    <div style="display:flex;align-items:center;gap:30px;">
+                        <img src="{team_avatar_url}" width="80" style="border-radius:50%;">
+                        <div>
+                            <h2 style="margin-bottom:0;">{team_name}</h2>
+                            <span style="color: #aaa;">Owner: {owner_name}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"""
+                    <div style="margin-top:20px;margin-bottom:15px;">
+                        <span style="background:#ffe066;color:#b38800;font-weight:bold;border-radius:5px;padding:3px 10px;">Contender</span>
+                        &nbsp;&nbsp; 
+                        <span style="color:#4da6ff;font-weight:600;">Total Value:</span> {total_value:,} | 
+                        <span style="color:#7f8c8d;">Avg Age:</span> {avg_age:.1f}
+                    </div>
+                    """, unsafe_allow_html=True
+                )
+        
+                # Position columns
+                pos_cols = st.columns(4)
+                for i, pos in enumerate(["QB", "RB", "WR", "TE"]):
+                    with pos_cols[i]:
+                        st.markdown(f"<h4 style='color:#4da6ff;'>{pos}</h4>", unsafe_allow_html=True)
+                        pos_df = pos_ranks[pos]["top_players"]
+                        for _, row in pos_df.iterrows():
+                            val = int(row["KTC_Value"])
+                            color = "#44c553" if val >= 4000 else "#ff6f61" if val < 2000 else "#ccc"
+                            st.markdown(
+                                f"<div style='font-size:17px;color:{color};font-weight:600'>{row['Player_Sleeper']} <span style='float:right;'>{val:,}</span></div>",
+                                unsafe_allow_html=True
+                            )
+        
+                # Draft Picks
+                with st.expander("Draft Picks", expanded=True):
+                    if not picks_df.empty:
+                        for _, pick in picks_df.iterrows():
+                            val = pick["KTC_Value"]
+                            pick_str = pick["Player_Sleeper"]
+                            st.markdown(
+                                f"<div style='font-size:15px;color:#7f8c8d;font-weight:600'>{pick_str} <span style='float:right;color:#4da6ff;'>{val:,}</span></div>",
+                                unsafe_allow_html=True
+                            )
+                    else:
+                        st.markdown("<span style='color:#aaa;'>No picks</span>", unsafe_allow_html=True)
+        
+        elif active_tab == "Trade Away":  # Main trade tool as before!
             if not df.empty:
                 top_qbs = df[df["Position"] == "QB"].sort_values("KTC_Value", ascending=False).head(30)["Player_Sleeper"].tolist()
         
