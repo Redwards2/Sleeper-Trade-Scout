@@ -358,6 +358,8 @@ def load_league_data(league_id, ktc_df):
     # --- Build pick-to-owner map (latest owner per pick, across both years)
     pick_to_owner = build_pick_ownership_map(all_trades, user_map)
 
+    data = []
+    
     for roster in rosters:
         roster_id = roster["roster_id"]
         owner_id = roster["owner_id"]
