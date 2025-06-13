@@ -739,9 +739,8 @@ if username:
                         <img src="{team_avatar_url}" width="80" style="border-radius:50%;">
                         <div>
                             <h2 style="margin-bottom:0;">{selected_league_name}</h2>
-                            <div style='color:#bfbfbf; font-size:16px; margin-bottom:4px;'>{league_desc}</div>
+                            <div style='color:#4da6ff; font-size:16px; margin-bottom:4px;'>{league_desc}</div>
                             <div style='color:#aaa;'>Owner: {username}</div>
-                            <div style='font-size:20px;font-weight:700;color:#fff;'>Team: {team_name}</div>
                         </div>
                     </div>
                     """, unsafe_allow_html=True
