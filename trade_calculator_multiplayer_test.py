@@ -284,7 +284,14 @@ def load_league_data(league_id, ktc_df):
     users_url = f"https://api.sleeper.app/v1/league/{league_id}/users"
     rosters_url = f"https://api.sleeper.app/v1/league/{league_id}/rosters"
     users = requests.get(users_url).json()
+    if users is None or not isinstance(users, list):
+        st.error("Could not load league users. League may be private or inaccessible.")
+        st.stop()
+    
     rosters = requests.get(rosters_url).json()
+    if rosters is None or not isinstance(rosters, list):
+        st.error("Could not load league rosters. League may be private or inaccessible.")
+        st.stop()
 
     user_map = {user['user_id']: user['display_name'] for user in users}
     _, traded_pick_owners = get_all_trades_from_league(league_id)
