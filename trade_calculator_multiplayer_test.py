@@ -814,13 +814,22 @@ if username:
                     my_players_list = possible_players[["Player_Sleeper", "KTC_Value", "Position", "Team"]].to_dict(orient="records")
         
                     # 1-for-1 suggestion (no package bonus applied to your side!)
-                    one_for_one = possible_players[
-                        (possible_players["KTC_Value"] >= one_low) & (possible_players["KTC_Value"] <= one_high)
-                    ]
+                    one_for_one_list = []
+                    for _, row in possible_players.iterrows():
+                        value = row["KTC_Value"]
+                        if row["Position"] == "QB" and row["Player_Sleeper"] in top_qbs:
+                            value += qb_premium_setting
+                        if one_low <= value <= one_high:
+                            one_for_one_list.append({
+                                "Player": f"{row['Player_Sleeper']} (KTC: {row['KTC_Value']})",
+                                "Position": row["Position"],
+                                "Total Value": value
+                            })
+                    one_for_one_df = pd.DataFrame(one_for_one_list)
         
                     st.markdown("<h4>1-for-1 Offers:</h4>", unsafe_allow_html=True)
-                    if not one_for_one.empty:
-                        st.dataframe(one_for_one[["Player_Sleeper", "Position", "KTC_Value"]].reset_index(drop=True))
+                    if not one_for_one_df.empty:
+                        st.dataframe(one_for_one_df.reset_index(drop=True))
                     else:
                         st.write("No single-player offers found in that range.")
         
@@ -830,14 +839,20 @@ if username:
                     results = []
                     for combo in combinations(my_players_list, 2):
                         value = combo[0]["KTC_Value"] + combo[1]["KTC_Value"]
+                        # QB Premium for each player in the combo
+                        if combo[0]["Position"] == "QB" and combo[0]["Player_Sleeper"] in top_qbs:
+                            value += qb_premium_setting
+                        if combo[1]["Position"] == "QB" and combo[1]["Player_Sleeper"] in top_qbs:
+                            value += qb_premium_setting
                         if one_low <= value <= one_high:
                             results.append({
                                 "Player 1": f"{combo[0]['Player_Sleeper']} (KTC: {combo[0]['KTC_Value']})",
                                 "Player 2": f"{combo[1]['Player_Sleeper']} (KTC: {combo[1]['KTC_Value']})",
                                 "Total Value": value
                             })
-                    if results:
-                        st.dataframe(pd.DataFrame(results).sort_values("Total Value", ascending=False).reset_index(drop=True))
+                    results_df = pd.DataFrame(results)
+                    if not results_df.empty:
+                        st.dataframe(results_df.sort_values("Total Value", ascending=False).reset_index(drop=True))
                     else:
                         st.write("No 2-for-1 offers found in that range.")
         
