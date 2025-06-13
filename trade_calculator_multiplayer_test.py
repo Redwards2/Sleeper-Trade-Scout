@@ -278,6 +278,49 @@ def get_all_trades_from_league(league_id):
     return all_trades, pick_owners
 
 # --------------------
+# Pick formatter for rookie picks
+# --------------------
+def format_pick_id(pid):
+    if "pick" in pid:
+        parts = pid.split("_")  # example: 2025_pick_1_01
+        if len(parts) == 4 and parts[1] == "pick":
+            return f"{parts[0]} Pick {parts[2]}.{parts[3]}"
+    return pid
+
+# ===============================
+# Helper: Canonicalize pick names
+# ===============================
+def canonical_pick_name(pid):
+    # Matches "2025_pick_1_04" to "2025 Pick 1.04" (same as in your KTC CSV)
+    if pid.startswith("2025_pick_"):
+        parts = pid.split("_")
+        if len(parts) == 4:
+            rd = parts[2]
+            slot = parts[3]
+            return f"2025 Pick {rd}.{slot}"
+    # "2025 1st round pick (Redwards)" or similar — keep as is
+    if pid.startswith("2025") and "round pick" in pid:
+        return pid
+    return pid
+
+# =====================================
+# Helper: Build final pick owner mapping
+# =====================================
+def build_pick_ownership_map(trades, user_map):
+    """
+    Map each traded pick ID (all formats) to its latest owner (display name).
+    """
+    pick_to_owner = {}
+    for trade in trades:
+        adds = trade.get("adds") or {}
+        for pid, roster_id in adds.items():
+            # Only care about picks
+            if "pick" in pid or "Pick" in pid:
+                owner_name = user_map.get(str(roster_id), f"Team {roster_id}")
+                pick_to_owner[canonical_pick_name(pid)] = owner_name
+    return pick_to_owner
+
+# --------------------
 # Sleeper League Loader with KTC Matching
 # --------------------
 def load_league_data(league_id, ktc_df):
@@ -1079,49 +1122,6 @@ if 'league_id' in locals():
 # --------------------
 def ordinal(n):
     return "%d%s" % (n, "tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
-
-# --------------------
-# Pick formatter for rookie picks
-# --------------------
-def format_pick_id(pid):
-    if "pick" in pid:
-        parts = pid.split("_")  # example: 2025_pick_1_01
-        if len(parts) == 4 and parts[1] == "pick":
-            return f"{parts[0]} Pick {parts[2]}.{parts[3]}"
-    return pid
-
-# ===============================
-# Helper: Canonicalize pick names
-# ===============================
-def canonical_pick_name(pid):
-    # Matches "2025_pick_1_04" to "2025 Pick 1.04" (same as in your KTC CSV)
-    if pid.startswith("2025_pick_"):
-        parts = pid.split("_")
-        if len(parts) == 4:
-            rd = parts[2]
-            slot = parts[3]
-            return f"2025 Pick {rd}.{slot}"
-    # "2025 1st round pick (Redwards)" or similar — keep as is
-    if pid.startswith("2025") and "round pick" in pid:
-        return pid
-    return pid
-
-# =====================================
-# Helper: Build final pick owner mapping
-# =====================================
-def build_pick_ownership_map(trades, user_map):
-    """
-    Map each traded pick ID (all formats) to its latest owner (display name).
-    """
-    pick_to_owner = {}
-    for trade in trades:
-        adds = trade.get("adds") or {}
-        for pid, roster_id in adds.items():
-            # Only care about picks
-            if "pick" in pid or "Pick" in pid:
-                owner_name = user_map.get(str(roster_id), f"Team {roster_id}")
-                pick_to_owner[canonical_pick_name(pid)] = owner_name
-    return pick_to_owner
 
 def filter_trades_for_player(trades, player_name, player_pool):
     """
